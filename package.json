@@ -1,0 +1,11 @@
+{
+  "name": "cs_package_build",
+  "version": "1.0.0",
+  "description": "Package management and build tool for the Csound language",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Edward Costello",
+  "license": "LGPL-2.0"
+}
