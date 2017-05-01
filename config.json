@@ -1,0 +1,12 @@
+{
+    "repositories": [
+        {
+            "name": "cspm-registry",
+            "location": {
+                "type": "github",
+                "user": "eddyc",
+                "repository": "cspm-registry"
+            }
+        }
+    ]
+}

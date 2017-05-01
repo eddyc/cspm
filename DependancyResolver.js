@@ -1,7 +1,5 @@
-let resolved = [];
-let seen = [];
 
-function resolver(node, resolved){
+function resolver(node, resolved, seen){
 
     seen.push(node);
 
@@ -28,20 +26,20 @@ function resolver(node, resolved){
                 }
             }
 
-            resolver(edge, resolved);
+            resolver(edge, resolved, seen);
         }
     }
 
     resolved.push(node);
 }
 
-function DependancyResolver(a) {
+function resolveDependencyTree(tree) {
 
-    resolved = [];
-    seen = [];
-    resolver(a, resolved)
+    let resolved = [];
+    let seen = [];
+    resolver(tree, resolved, seen)
 
     return resolved;
 }
 
-module.exports = DependancyResolver;
+module.exports.resolveDependencyTree = resolveDependencyTree;

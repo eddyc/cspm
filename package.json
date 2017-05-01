@@ -1,11 +1,23 @@
 {
-  "name": "cs_package_build",
-  "version": "1.0.0",
-  "description": "Package management and build tool for the Csound language",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Edward Costello",
-  "license": "LGPL-2.0"
+    "name": "cspm",
+    "version": "1.0.0",
+    "description": "Package management and build tool for the Csound language",
+    "main": "main.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Edward Costello",
+    "license": "LGPL-2.0",
+    "dependencies": {
+        "filehound": "^1.16.1",
+        "jsonfile": "^3.0.0",
+        "mv": "^2.1.1",
+        "nodegit": "^0.18.2",
+        "octokit": "^0.10.4",
+        "readline-sync": "^1.4.7",
+        "request": "^2.81.0",
+        "request-progress": "^3.0.0",
+        "unzip": "^0.1.11",
+        "xmlbuilder": "^8.2.2"
+    }
 }

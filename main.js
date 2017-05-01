@@ -1,49 +1,211 @@
-const Node = require("./Node.js");
-const DependancyResolver = require("./DependancyResolver.js");
-const FileParser = require("./FileParser.js");
+(function main() {
 
-let fs = require("fs");
-let path = require("path");
+    if (process.argv.length < 3) {
 
-function walkSync(dir) {
-    if (!fs.lstatSync(dir).isDirectory()) return dir;
+        console.log("cspm: Error, not enough arguments.");
+        process.exit();
+    }
 
-    return fs.readdirSync(dir).map(f => walkSync(path.join(dir, f))); // `join("\n")`
+    let option = process.argv[2];
+    let packageCachePath = "./package-cache.json";
+
+    switch (option) {
+
+        case "init": {
+
+            if (process.argv.length === 4) {
+
+                let init = require('./init').init;
+                init(process.argv[3]);
+            }
+            break;
+        }
+        case "update": {
+
+            let update = require("./update").update;
+            update(packageCachePath);
+            break;
+        }
+        case "install": {
+
+            if (process.argv.length === 4) {
+
+                let file = process.argv[3];
+                let install = require("./install").install;
+                install(file, packageCachePath);
+            }
+            else if (process.argv.length === 3) {
+
+                let csp = require(process.cwd() + '/csp.json');
+                let packageCache = require(packageCachePath);
+
+                let dependencyList = buildDependencyList(csp.dependencies, packageCache);
+                console.log(dependencyList);
+                // var dirString = process.cwd();
+                // let resolveDependencies = require("./install").resolveDependencies;
+                // resolveDependencies(dirString, packageCachePath);
+            }
+            break;
+        }
+        case "build": {
+
+            if (process.argv.length === 4) {
+
+                let buildType = process.argv[3];
+
+                build(buildType);
+            }
+            else {
+
+                console.log("Error: no build type specified");
+            }
+            break;
+
+        }
+        default: {
+
+            console.log("Usage:");
+            console.log("cspm update");
+            console.log("cspm install");
+            console.log("cspm install <package-name>");
+        }
+
+    }
+})();
+
+function build(buildType) {
+
+
+    let cspJson = require(process.cwd() + "/csp");
+    let buildObject = cspJson[buildType];
+
+    switch (buildType) {
+
+        case 'csd': {
+
+            buildCsd(buildObject);
+            break;
+        }
+
+        default:
+
+    }
 }
 
-let a = new Node('a');
-let b = new Node('b');
-let c = new Node('c');
-let d = new Node('d');
-let e = new Node('e');
+function resolveDependencies() {
 
-a.addEdge(b);
-a.addEdge(d);
-b.addEdge(c);
-b.addEdge(e);
-c.addEdge(d);
-c.addEdge(e);
+    const Node = require("./Node.js");
+    const resolveDependencyTree = require("./DependancyResolver.js").resolveDependencyTree;
 
-let result = DependancyResolver(a);
+    let instr1 = new Node('instr1');
+    let instr2 = new Node('instr2');
+    let udoMain1 = new Node('udoMain1');
+    let udoMain2 = new Node('udoMain2');
+    let udoA = new Node('udoA');
+    let udoB = new Node('udoB');
+    let udoC = new Node('udoC');
+    let csd = new Node('csd');
 
-console.log(result);
+    instr1.addEdge(udoMain1);
+    udoMain1.addEdge(udoA);
+    udoA.addEdge(udoB);
 
+    instr2.addEdge(udoMain2);
+    udoMain2.addEdge(udoB);
+    udoMain2.addEdge(udoC);
 
-if (process.argv.length !== 3) {
-    console.log("Usage: " + __filename + " CsoundPackage.csp");
-    process.exit(-1);
+    csd.addEdge(instr1);
+    csd.addEdge(instr2);
+
+    let result = resolveDependencyTree(csd);
+
+    console.log(result);
 }
-let packageName = process.argv[2];
-let config = require("./" + packageName + "/config.json");
-let simple = require("./" + packageName + "/simple.json");
-console.log(simple);
-let files = walkSync(packageName);
-let entrypointPath = "./" + packageName + "/" + config.entrypoint + ".orc";
+
+function buildDependencyList(dependencies, packageCache) {
+
+    let dependencyList = [];
+    const Node = require("./Node.js");
+    const resolveDependencyTree = require("./DependancyResolver.js").resolveDependencyTree;
 
 
-console.log(files);
-console.log(entrypointPath);
+    function buildTree(dependencies, tree) {
 
-let dependencies = FileParser(entrypointPath);
+        if (Object.keys(dependencies).length != 0) {
 
-console.log(dependencies);
+            for (let dependency in dependencies) {
+
+                let currentDependencyArray = [];
+
+                for (let repository in packageCache) {
+
+                    let currentDependency = packageCache[repository].packages[dependency];
+
+                    if (typeof currentDependency != 'undefined') {
+
+                        currentDependency.name = dependency;
+                        currentDependencyArray.push(currentDependency);
+                    }
+                }
+
+                // Ask which one perhaps in the future?
+
+                tree.addEdge(new Node(currentDependencyArray[0].name));
+
+                buildTree(currentDependencyArray[0].dependencies, tree.edges[tree.edges.length - 1]);
+
+                return tree;
+            }
+        }
+
+    }
+
+    let head = new Node('head');
+    let tree = buildTree(dependencies, head);
+
+    let result = resolveDependencyTree(tree);
+    result.pop();
+
+
+    return result;
+}
+
+function buildDependencyTree(dependencies)
+{
+
+}
+
+function buildCsd(buildObject) {
+
+    resolveDependencies();
+
+    console.log(buildObject);
+
+    let xmlbuilder = require("xmlbuilder");
+
+    let csoptionsString = "\n";
+
+    for (let i = 0; i < buildObject.csoptions.length; i++) {
+
+        csoptionsString += " -" + buildObject.csoptions[i];
+    }
+
+    csoptionsString += "\n";
+
+    for (let i = 0; i < buildObject.instruments.length; i++) {
+
+        console.log(buildObject.instruments[i]);
+    }
+
+
+    let xml = xmlbuilder.create('CsoundSynthesizer', {
+        headless:true
+    })
+    .ele('CsOptions')
+    .txt(csoptionsString).up()
+    .ele('CsInstruments')
+    .txt("stuff").up()
+    .end({pretty: true});
+
+    console.log(xml);
+}
