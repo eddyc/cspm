@@ -58,8 +58,6 @@ function downloadRepositoryGithub(url, repoPath, packageCache, currentRepo, pack
 
         let fileString = JSON.stringify(packageCache);
         fs.writeFileSync(path.join(__dirname, packageCachePath), fileString);
-        //
-        // packageCache = require(packageCachePath);
     })
     .then(function() {
 

@@ -1,13 +1,11 @@
-function install(file, packageCachePath) {
+function install(fileName, packageCachePath, callback, clean) {
 
     let packageCache = require(packageCachePath);
-    let packageFound = false;
+    let packageJson = searchPackageCacheForPackage(fileName, packageCache);
 
-    let result = searchPackageCacheForPackage(file, packageCache);
+    if (packageJson !== false) {
 
-    if (result != false) {
-
-        downloadPackage(result);
+        downloadPackage(fileName, packageJson, callback, clean);
     }
     else {
 
@@ -15,67 +13,63 @@ function install(file, packageCachePath) {
     }
 }
 
-function downloadPackage(currentPackage) {
+function downloadPackage(fileName, packageJson, callback, clean) {
 
-    switch (currentPackage.location.type) {
+    switch (packageJson.location.type) {
 
         case "github": {
 
-            downloadPackageGithub(currentPackage);
+            downloadPackageGithub(fileName, packageJson, callback, clean);
             break;
         }
         default:
     }
 }
 
-function downloadPackageGithub(currentPackage) {
+function downloadPackageGithub(fileName, packageJson, callback, clean) {
 
-    var Octokit = require('octokit');
-    var gh = Octokit.new();
+    let Octokit = require('octokit');
+    let gh = Octokit.new();
 
-    var repo = gh.getRepo(currentPackage.location.user, currentPackage.location.repository);
+    let releaseUrl = "https://github.com/" +
+    packageJson.location.user +
+    "/" +
+    packageJson.location.repository +
+    "/archive/" +
+    packageJson.version +
+    ".zip";
 
-    repo.getReleases().then(function(releases) {
+    var fs = require('fs');
+    var request = require('request');
+    var progress = require('request-progress');
 
-        let releaseUrl = "https://github.com/" +
-        currentPackage.location.user +
-        "/" +
-        currentPackage.location.repository +
-        "/archive/" +
-        releases[0].tag_name +
-        ".zip";
+    if (!fs.existsSync(".tmp")) {
 
-        var fs = require('fs');
-        var request = require('request');
-        var progress = require('request-progress');
+        fs.mkdirSync(".tmp");
+    }
 
-        if (!fs.existsSync(".tmp")) {
+    let tmpFilePath = ".tmp/" + fileName + ".zip";
 
-            fs.mkdirSync(".tmp");
-        }
+    progress(request(releaseUrl))
+    .on('progress', function (state) {
+        // console.log('progress', state.percent);
+    })
+    .on('error', function (err) {
+        // console.log("Error");
+    })
+    .on('end', function () {
 
-        progress(request(releaseUrl))
-        .on('progress', function (state) {
-            // console.log('progress', state.percent);
-        })
-        .on('error', function (err) {
-            // console.log("Error");
-        })
-        .on('end', function () {
-
-            unzipPackage(".tmp/" + currentPackage.name + ".zip", currentPackage);
-        })
-        .pipe(fs.createWriteStream(".tmp/" + currentPackage.name + ".zip"));
-    });
+        unzipPackage(tmpFilePath, packageJson, callback, clean, fileName);
+    })
+    .pipe(fs.createWriteStream(tmpFilePath));
 }
 
 
-function unzipPackage(packageZipPath, currentPackage) {
+function unzipPackage(packageZipPath, packageJson, callback, clean, fileName) {
 
     let fs = require('fs-extra');
     let unzip = require('unzip');
     let stream = fs.createReadStream(packageZipPath).pipe(unzip.Extract({ path: "./.tmp" }));
-    let mv = require('mv');
 
     if (!fs.existsSync("./packages")) {
 
@@ -84,68 +78,39 @@ function unzipPackage(packageZipPath, currentPackage) {
 
     stream.on('close', function() {
 
-        const Filehound = require('filehound');
+        callback();
 
-        const subdirectories = Filehound.create()
-        .path(".tmp")
-        .directory()
-        .findSync();
+        if (clean === true) {
 
-        for (let i = 0; i < subdirectories.length; i++) {
+            const subdirectories = require('filehound').create().path(".tmp").directory().findSync();
+            let mv = require('mv');
 
-            mv(subdirectories[i], "./packages/" + currentPackage.name, function(err) {});
+            for (let i = 0; i < subdirectories.length; i++) {
+
+                let newPath = subdirectories[i].split(".")[1].split("/")[1];
+                mv(subdirectories[i], "./packages/" + newPath, function(err) {});
+            }
+
+            fs.removeSync("./.tmp");
         }
-
-        fs.removeSync("./.tmp");
     });
 }
 
 function searchPackageCacheForPackage(packageName, packageCache) {
 
-    let packageFound = false;
-
     for (let i in packageCache) {
 
-        for (let j = 0; j < packageCache[i].packages.length; ++j) {
+        let packages = packageCache[i].packages;
 
-            let currentPackage = packageCache[i].packages[j];
+        if (typeof packages[packageName] != 'undefined') {
 
-            if (packageName === currentPackage.name) {
-
-                packageFound = true;
-
-                return currentPackage;
-            }
-        }
-    }
-
-    return false;
-}
-
-function resolveDependencies(currentPath, packageCachePath) {
-
-    let fs = require('fs');
-    let path = require('path');
-    let packageCache = require(packageCachePath);
-    let csp = require(currentPath + '/csp.json');
-
-    let dependencies = csp.dependencies;
-
-    for (let dependency in dependencies) {
-
-        let currentDependency = searchPackageCacheForPackage(dependency, packageCache);
-
-        if (currentDependency != false) {
-
-            downloadPackage(currentDependency);
+            return packages[packageName];
         }
         else {
 
-            console.log("Error: could not find package " + dependency + ", exiting");
-            process.exit();
+            return false;
         }
     }
 }
 
 module.exports.install = install;
-module.exports.resolveDependencies = resolveDependencies;

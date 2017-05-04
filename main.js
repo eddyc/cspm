@@ -16,6 +16,7 @@
             if (process.argv.length === 4) {
 
                 let init = require('./init').init;
+                let type = process.argv[3];
                 init(process.argv[3]);
             }
             break;
@@ -28,22 +29,35 @@
         }
         case "install": {
 
-            if (process.argv.length === 4) {
+            let install = require("./install").install;
 
-                let file = process.argv[3];
-                let install = require("./install").install;
-                install(file, packageCachePath);
+            if (process.argv.length === 4) {
+                console.log("this won't work now!");
+                process.exit();
+                // let file = process.argv[3];
+                // install(file, packageCachePath, function() {});
             }
             else if (process.argv.length === 3) {
 
                 let csp = require(process.cwd() + '/csp.json');
                 let packageCache = require(packageCachePath);
-
+                let buildDependencyList = require('./dependency').buildDependencyList;
                 let dependencyList = buildDependencyList(csp.dependencies, packageCache);
-                console.log(dependencyList);
-                // var dirString = process.cwd();
-                // let resolveDependencies = require("./install").resolveDependencies;
-                // resolveDependencies(dirString, packageCachePath);
+
+                function installRecursive() {
+
+                    dependencyList.pop();
+                    if (dependencyList.length > 1) {
+
+                        install(dependencyList[dependencyList.length - 1], packageCachePath, installRecursive, false);
+                    }
+                    else {
+
+                        install(dependencyList[dependencyList.length - 1], packageCachePath, function(){}, true);
+                    }
+                }
+
+                install(dependencyList[dependencyList.length - 1], packageCachePath, installRecursive);
             }
             break;
         }
@@ -51,9 +65,16 @@
 
             if (process.argv.length === 4) {
 
+                let build = require("./build");
                 let buildType = process.argv[3];
-
                 build(buildType);
+            }
+            else if (process.argv.length === 5) {
+
+                let build = require("./build");
+                let buildType = process.argv[3];
+                let buildObject = process.argv[4];
+                build(buildType, buildObject);
             }
             else {
 
@@ -61,6 +82,20 @@
             }
             break;
 
+        }
+        case "readme": {
+
+            if (process.argv.length === 4) {
+
+                let fileName = process.argv[3];
+
+                readme(fileName);
+            }
+            else {
+
+                console.log("Error: no file name specified");
+            }
+            break;
         }
         default: {
 
@@ -72,140 +107,3 @@
 
     }
 })();
-
-function build(buildType) {
-
-
-    let cspJson = require(process.cwd() + "/csp");
-    let buildObject = cspJson[buildType];
-
-    switch (buildType) {
-
-        case 'csd': {
-
-            buildCsd(buildObject);
-            break;
-        }
-
-        default:
-
-    }
-}
-
-function resolveDependencies() {
-
-    const Node = require("./Node.js");
-    const resolveDependencyTree = require("./DependancyResolver.js").resolveDependencyTree;
-
-    let instr1 = new Node('instr1');
-    let instr2 = new Node('instr2');
-    let udoMain1 = new Node('udoMain1');
-    let udoMain2 = new Node('udoMain2');
-    let udoA = new Node('udoA');
-    let udoB = new Node('udoB');
-    let udoC = new Node('udoC');
-    let csd = new Node('csd');
-
-    instr1.addEdge(udoMain1);
-    udoMain1.addEdge(udoA);
-    udoA.addEdge(udoB);
-
-    instr2.addEdge(udoMain2);
-    udoMain2.addEdge(udoB);
-    udoMain2.addEdge(udoC);
-
-    csd.addEdge(instr1);
-    csd.addEdge(instr2);
-
-    let result = resolveDependencyTree(csd);
-
-    console.log(result);
-}
-
-function buildDependencyList(dependencies, packageCache) {
-
-    let dependencyList = [];
-    const Node = require("./Node.js");
-    const resolveDependencyTree = require("./DependancyResolver.js").resolveDependencyTree;
-
-
-    function buildTree(dependencies, tree) {
-
-        if (Object.keys(dependencies).length != 0) {
-
-            for (let dependency in dependencies) {
-
-                let currentDependencyArray = [];
-
-                for (let repository in packageCache) {
-
-                    let currentDependency = packageCache[repository].packages[dependency];
-
-                    if (typeof currentDependency != 'undefined') {
-
-                        currentDependency.name = dependency;
-                        currentDependencyArray.push(currentDependency);
-                    }
-                }
-
-                // Ask which one perhaps in the future?
-
-                tree.addEdge(new Node(currentDependencyArray[0].name));
-
-                buildTree(currentDependencyArray[0].dependencies, tree.edges[tree.edges.length - 1]);
-
-                return tree;
-            }
-        }
-
-    }
-
-    let head = new Node('head');
-    let tree = buildTree(dependencies, head);
-
-    let result = resolveDependencyTree(tree);
-    result.pop();
-
-
-    return result;
-}
-
-function buildDependencyTree(dependencies)
-{
-
-}
-
-function buildCsd(buildObject) {
-
-    resolveDependencies();
-
-    console.log(buildObject);
-
-    let xmlbuilder = require("xmlbuilder");
-
-    let csoptionsString = "\n";
-
-    for (let i = 0; i < buildObject.csoptions.length; i++) {
-
-        csoptionsString += " -" + buildObject.csoptions[i];
-    }
-
-    csoptionsString += "\n";
-
-    for (let i = 0; i < buildObject.instruments.length; i++) {
-
-        console.log(buildObject.instruments[i]);
-    }
-
-
-    let xml = xmlbuilder.create('CsoundSynthesizer', {
-        headless:true
-    })
-    .ele('CsOptions')
-    .txt(csoptionsString).up()
-    .ele('CsInstruments')
-    .txt("stuff").up()
-    .end({pretty: true});
-
-    console.log(xml);
-}
