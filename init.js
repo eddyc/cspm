@@ -38,8 +38,10 @@ function init(type, subtype) {
             }
             case "build": {
 
-                let jsonObject = require(process.cwd() + "/csp");
-                initialiseBuild(jsonObject, subtype);
+                console.log("Not implemented yet");
+                process.exit();
+                // let jsonObject = require(process.cwd() + "/csp");
+                // initialiseBuild(jsonObject, subtype);
 
             }
             default:
@@ -76,6 +78,7 @@ function init(type, subtype) {
 function initialiseUdo() {
 
     console.log("Initialising Csound package:");
+    let fs = require('fs');
 
     let readlineSync = require('readline-sync');
     let jsonObject = {};
@@ -98,9 +101,16 @@ function initialiseUdo() {
     jsonObject.udo = {};
     let createEntrypoint = "";
 
+    let suggestedFileExists = fs.existsSync("./" + nameSuggestion + ".udo");
+
     while(createEntrypoint.localeCompare("no") !== 0 && createEntrypoint.localeCompare("yes") !== 0) {
 
-        createEntrypoint = readlineSync.question("Would you like to create a skeleton entrypoint file? (yes|no)\n> ")
+        let suggestFileExists = "perhaps yes, no appropriate udo files found";
+        if (suggestedFileExists == true) {
+
+            suggestedFileExists = " perhaps not, " + nameSuggestion + ".udo exists";
+        }
+        createEntrypoint = readlineSync.question("Would you like to create a skeleton entrypoint file? (yes|no)" + suggestedFileExists + "\n> ")
     }
 
     function processArguments(argumentList) {
@@ -169,13 +179,13 @@ function initialiseUdo() {
 
     if (createEntrypoint === "yes") {
 
-        nameSuggestion += "." + type;
+        nameSuggestion += ".udo";
         jsonObject.udo.entrypoint = readlineSync.question('Entrypoint file name: (' + nameSuggestion + ')\n> ');
-        jsonObject.udo.entrypoint = jsonObject[type].entrypoint === "" ? nameSuggestion : jsonObject[type].entrypoint;
+        jsonObject.udo.entrypoint = jsonObject.udo.entrypoint === "" ? nameSuggestion : jsonObject.udo.entrypoint;
 
         function createArguments(type) {
 
-            response = readlineSync.question("Enter " + type + " arguments seperated by commas\n> ")
+            response = readlineSync.question("Enter udo " + type + " arguments seperated by commas\n> ")
             response = response.split(',').map(s => s.trim());
 
             return processArguments(response);
@@ -186,7 +196,6 @@ function initialiseUdo() {
     }
     else {
 
-        let fs = require('fs');
         let entrypointFileName = "";
 
         do {

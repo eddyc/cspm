@@ -1,4 +1,4 @@
-function build(buildType, buildObject) {
+function build(buildType) {
 
 
     let cspJson = require(process.cwd() + "/csp");
@@ -12,7 +12,7 @@ function build(buildType, buildObject) {
         }
         case 'readme': {
 
-            buildReadme(buildObject);
+            buildReadme(cspJson);
         }
 
         default:
@@ -25,7 +25,7 @@ function buildCsd(cspJson) {
 
 
     let buildObject = cspJson["csd"];
-    
+
     let getBuildDependencyList = require("./dependency").getBuildDependencyList;
 
     getBuildDependencyList();
@@ -65,10 +65,9 @@ function buildCsd(cspJson) {
     console.log(xml);
 }
 
-function buildReadme(buildObject) {
+function buildReadme(cspJson) {
 
     let fs = require("fs-extra");
-    let cspJson = require(process.cwd() + "/csp");
 
     let md = "# "
     + cspJson.name + "\n\n"
@@ -88,35 +87,46 @@ function buildReadme(buildObject) {
 
     dependencies = dependencies.trim() === "" ? "None" : dependencies;
     md += dependencies + "\n\n";
-    md += "## Inputs \n";
 
-    function writeArguments(type) {
+    if (typeof cspJson["udo"] !== undefined) {
 
-        let argumentArray = cspJson[buildObject][type];
+        function writeUDOArguments(type) {
 
-        md += "\n| Name | Type | Rate | Minimum | Maximum | Description |\n"
-        + "|---|---|---|---|---|---|\n";
+            let argumentArray = cspJson.udo[type];
 
-        for (let i = 0; i < argumentArray.length; i++) {
+            md += "\n| Name | Type | Rate | Minimum | Maximum | Description |\n"
+            + "|---|---|---|---|---|---|\n";
 
-            let argument = argumentArray[i];
-            md += "| " + argument.name +
-            " | " + argument.type +
-            " | " + argument.rate +
-            " | " + argument.minimum +
-            " | " + argument.maximum +
-            " | " + argument.description + " |\n";
+            for (let i = 0; i < argumentArray.length; i++) {
+
+                let argument = argumentArray[i];
+                md += "| " + argument.name +
+                " | " + argument.type +
+                " | " + argument.rate +
+                " | " + argument.minimum +
+                " | " + argument.maximum +
+                " | " + argument.description + " |\n";
+
+            }
 
         }
+        md += "## Inputs \n";
 
+        writeUDOArguments("inputs");
+
+        md += "\n\n## Outputs \n";
+
+        writeUDOArguments("outputs");
+    }
+    else if (typeof cspJson["csd"] !== 'undefined') {
+
+        console.log("It's a csd");
+    }
+    else {
+
+        console.log("Unknown package type");
     }
 
-
-    writeArguments("inputs");
-
-    md += "\n\n## Outputs \n";
-
-    writeArguments("outputs");
 
     fs.writeFileSync(process.cwd() + "/README.md", md);
 

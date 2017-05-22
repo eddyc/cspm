@@ -2,6 +2,8 @@
 
 (function main() {
 
+    console.log(process.argv);
+
     if (process.argv.length < 3) {
 
         console.log("cspm: Error, not enough arguments.");
@@ -18,7 +20,13 @@
             let init = require('./init').init;
             let type = process.argv[3];
             let subtype = "";
-            if (process.argv.length === 4) {
+
+            if (process.argv.length === 3) {
+
+                console.log("Error: please specify init type, udo, csd etc..");
+                process.exit();
+            }
+            else if (process.argv.length === 4) {
 
                 init(type);
             }
@@ -76,13 +84,6 @@
                 let build = require("./build");
                 let buildType = process.argv[3];
                 build(buildType);
-            }
-            else if (process.argv.length === 5) {
-
-                let build = require("./build");
-                let buildType = process.argv[3];
-                let buildObject = process.argv[4];
-                build(buildType, buildObject);
             }
             else {
 
