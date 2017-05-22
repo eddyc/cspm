@@ -82,11 +82,11 @@ function resolveDependencies() {
     console.log(result);
 }
 
-function buildDependencyList(dependencies, packageCache) {
+function getInstallDependencyList(dependencies, packageCache) {
 
     let dependencyList = [];
 
-    //TODO: change hard coded registry
+    console.log("getInstallDependencyList: change hard coded registry");
 
     packageListKeyArray = Object.keys(packageCache["cspm-registry"].packages);
     packageListObject = packageCache["cspm-registry"].packages;
@@ -115,4 +115,11 @@ function buildDependencyList(dependencies, packageCache) {
     return result;
 }
 
-module.exports.buildDependencyList = buildDependencyList;
+function getBuildDependencyList(entrypointJson) {
+
+    console.log("getBuildDependencyList");
+
+}
+
+module.exports.getInstallDependencyList = getInstallDependencyList;
+module.exports.getBuildDependencyList = getBuildDependencyList;

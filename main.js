@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 (function main() {
 
     if (process.argv.length < 3) {
@@ -13,11 +15,17 @@
 
         case "init": {
 
+            let init = require('./init').init;
+            let type = process.argv[3];
+            let subtype = "";
             if (process.argv.length === 4) {
 
-                let init = require('./init').init;
-                let type = process.argv[3];
-                init(process.argv[3]);
+                init(type);
+            }
+            else if (process.argv.length === 5) {
+
+                subtype = process.argv[4];
+                init(type, subtype);
             }
             break;
         }
@@ -41,8 +49,8 @@
 
                 let csp = require(process.cwd() + '/csp.json');
                 let packageCache = require(packageCachePath);
-                let buildDependencyList = require('./dependency').buildDependencyList;
-                let dependencyList = buildDependencyList(csp.dependencies, packageCache);
+                let getInstallDependencyList = require('./dependency').getInstallDependencyList;
+                let dependencyList = getInstallDependencyList(csp.dependencies, packageCache);
 
                 function installRecursive() {
 
@@ -83,20 +91,6 @@
             break;
 
         }
-        case "readme": {
-
-            if (process.argv.length === 4) {
-
-                let fileName = process.argv[3];
-
-                readme(fileName);
-            }
-            else {
-
-                console.log("Error: no file name specified");
-            }
-            break;
-        }
         default: {
 
             console.log("Usage:");
@@ -104,6 +98,5 @@
             console.log("cspm install");
             console.log("cspm install <package-name>");
         }
-
     }
 })();

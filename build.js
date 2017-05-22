@@ -7,8 +7,7 @@ function build(buildType, buildObject) {
 
         case 'csd': {
 
-            let buildObject = cspJson[buildType];
-            buildCsd(buildObject);
+            buildCsd(cspJson);
             break;
         }
         case 'readme': {
@@ -22,9 +21,14 @@ function build(buildType, buildObject) {
 }
 
 
-function buildCsd(buildObject) {
+function buildCsd(cspJson) {
 
-    resolveDependencies();
+
+    let buildObject = cspJson["csd"];
+    
+    let getBuildDependencyList = require("./dependency").getBuildDependencyList;
+
+    getBuildDependencyList();
 
     console.log(buildObject);
 
@@ -32,10 +36,14 @@ function buildCsd(buildObject) {
 
     let csoptionsString = "\n";
 
-    for (let i = 0; i < buildObject.csoptions.length; i++) {
+    if (typeof buildObject.csoptions !== 'undefined') {
 
-        csoptionsString += " -" + buildObject.csoptions[i];
+        for (let i = 0; i < buildObject.csoptions.length; i++) {
+
+            csoptionsString += " -" + buildObject.csoptions[i];
+        }
     }
+
 
     csoptionsString += "\n";
 

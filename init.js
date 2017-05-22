@@ -1,10 +1,79 @@
-function init(type) {
+function init(type, subtype) {
 
-    if (type !== "udo" && type !== "csd") {
+    let fs = require("fs");
+
+    if (type !== "udo" && type !== "build") {
 
         console.log("Unknown initialisation type " + type + " exiting.");
         process.exit(-1);
     }
+
+    let readlineSync = require('readline-sync');
+    let jsonObject = {};
+
+    if (fs.existsSync("./csp.json")) {
+
+        switch (type) {
+
+            case "udo": {
+
+                let response = "";
+
+                while(response.localeCompare("no") !== 0 && response.localeCompare("yes") !== 0) {
+
+                    response = readlineSync.question("csp.json exists, re-initialise? (yes | no)\n> ");
+                }
+
+                if (response === "yes") {
+
+                    jsonObject = initialiseUdo(jsonObject);
+                }
+                else if (response === "no"){
+
+                    console.log("OK, exiting....");
+                    process.exit();
+                }
+
+                break;
+            }
+            case "build": {
+
+                let jsonObject = require(process.cwd() + "/csp");
+                initialiseBuild(jsonObject, subtype);
+
+            }
+            default:
+
+        }
+    }
+    else {
+
+        switch (type) {
+
+            case "udo": {
+
+                jsonObject = initialiseUdo(jsonObject);
+                break;
+            }
+            case "build": {
+
+                console.log("Error, csp file doesn't exist\nExiting...");
+                process.exit();
+            }
+
+            default:
+
+        }
+    }
+
+    let jsonfile = require('jsonfile');
+
+    let fileName = 'csp.json';
+
+    jsonfile.writeFileSync(fileName, jsonObject);
+}
+
+function initialiseUdo() {
 
     console.log("Initialising Csound package:");
 
@@ -26,44 +95,13 @@ function init(type) {
         jsonObject.dependencies = [];
     }
 
-    jsonObject[type] = {};
-    let response = "";
+    jsonObject.udo = {};
+    let createEntrypoint = "";
 
-    while(response.localeCompare("no") !== 0 && response.localeCompare("yes") !== 0) {
+    while(createEntrypoint.localeCompare("no") !== 0 && createEntrypoint.localeCompare("yes") !== 0) {
 
-        response = readlineSync.question("Would you like to create a skeleton entrypoint file? (yes|no)\n> ")
+        createEntrypoint = readlineSync.question("Would you like to create a skeleton entrypoint file? (yes|no)\n> ")
     }
-
-    nameSuggestion += "." + type;
-    jsonObject[type].entrypoint = readlineSync.question('Entrypoint file name: (' + nameSuggestion + ')\n> ');
-    jsonObject[type].entrypoint = jsonObject[type].entrypoint === "" ? nameSuggestion : jsonObject[type].entrypoint;
-
-    switch (type) {
-
-        case "udo": {
-
-            initialiseUdo(jsonObject, response);
-            break;
-        }
-        case "csd": {
-
-            initialiseCsd(jsonObject, response);
-            break;
-        }
-
-        default:
-    }
-
-    let jsonfile = require('jsonfile')
-
-    let fileName = 'csp.json'
-
-    jsonfile.writeFileSync(fileName, jsonObject);
-}
-
-function initialiseUdo(jsonObject, createEntrypoint) {
-
-    let readlineSync = require('readline-sync');
 
     function processArguments(argumentList) {
 
@@ -131,6 +169,10 @@ function initialiseUdo(jsonObject, createEntrypoint) {
 
     if (createEntrypoint === "yes") {
 
+        nameSuggestion += "." + type;
+        jsonObject.udo.entrypoint = readlineSync.question('Entrypoint file name: (' + nameSuggestion + ')\n> ');
+        jsonObject.udo.entrypoint = jsonObject[type].entrypoint === "" ? nameSuggestion : jsonObject[type].entrypoint;
+
         function createArguments(type) {
 
             response = readlineSync.question("Enter " + type + " arguments seperated by commas\n> ")
@@ -145,12 +187,26 @@ function initialiseUdo(jsonObject, createEntrypoint) {
     else {
 
         let fs = require('fs');
+        let entrypointFileName = "";
+
+        do {
+
+            entrypointFileName = readlineSync.question("Entrypoint file name:\n> ")
+        }
+        while(fs.existsSync("./" + entrypointFileName) === false);
+
+
+        jsonObject.udo.entrypoint = entrypointFileName;
+
         let udoEntrypoint = fs.readFileSync(jsonObject.udo.entrypoint, 'utf8');
         let udoEntryPointLines = udoEntrypoint.split('\n');
 
         for (let i = 0; i < udoEntryPointLines.length; i++) {
 
             let replacement = "";
+            jsonObject.udo.inputs = [];
+            jsonObject.udo.outputs = [];
+
             if (udoEntryPointLines[i].includes("xin")) {
 
                 let inputs = udoEntryPointLines[i].replace("xin", "").split(",").map(s => s.trim());
@@ -167,7 +223,15 @@ function initialiseUdo(jsonObject, createEntrypoint) {
     return jsonObject;
 }
 
-function initialiseCsd(jsonObject, createEntrypoint) {
+
+function initialiseBuild(jsonObject, subtype) {
+
+    let readlineSync = require('readline-sync');
+
+    console.log(jsonObject);
+}
+
+function initialiseCsd(jsonObject) {
 
     let readlineSync = require('readline-sync');
 
