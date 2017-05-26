@@ -1,72 +1,49 @@
-function init(type, subtype) {
+function init(type) {
 
     let fs = require("fs");
 
-    if (type !== "udo" && type !== "build") {
+    if (type !== "udo" && type !== "csd" && type !== "build") {
 
         console.log("Unknown initialisation type " + type + " exiting.");
         process.exit(-1);
     }
 
-    let readlineSync = require('readline-sync');
-    let jsonObject = {};
+    let askQuestion = require("./utilities").askQuestion;
+
 
     if (fs.existsSync("./csp.json")) {
 
-        switch (type) {
+        let response = askQuestion("csp.json exists, re-initialise?", ["yes", "no"], 1);
 
-            case "udo": {
+        if (response === "no") {
 
-                let response = "";
-
-                while(response.localeCompare("no") !== 0 && response.localeCompare("yes") !== 0) {
-
-                    response = readlineSync.question("csp.json exists, re-initialise? (yes | no)\n> ");
-                }
-
-                if (response === "yes") {
-
-                    jsonObject = initialiseUdo(jsonObject);
-                }
-                else if (response === "no"){
-
-                    console.log("OK, exiting....");
-                    process.exit();
-                }
-
-                break;
-            }
-            case "build": {
-
-                console.log("Not implemented yet");
-                process.exit();
-                // let jsonObject = require(process.cwd() + "/csp");
-                // initialiseBuild(jsonObject, subtype);
-
-            }
-            default:
-
+            console.log("OK, exiting....");
+            process.exit();
         }
     }
-    else {
 
-        switch (type) {
+    let jsonObject = initialiseGeneral();
+    
+    switch (type) {
 
-            case "udo": {
+        case "udo": {
 
-                jsonObject = initialiseUdo(jsonObject);
-                break;
-            }
-            case "build": {
-
-                console.log("Error, csp file doesn't exist\nExiting...");
-                process.exit();
-            }
-
-            default:
-
+            jsonObject = initialiseUdo(jsonObject);
+            break;
         }
+        case "csd": {
+
+            jsonObject = initialiseCsd(jsonObject);
+            break;
+        }
+        case "build": {
+
+            console.log("Not implemented yet");
+            process.exit();
+        }
+        default:
     }
+
 
     let jsonfile = require('jsonfile');
 
@@ -75,12 +52,12 @@ function init(type, subtype) {
     jsonfile.writeFileSync(fileName, jsonObject);
 }
 
-function initialiseUdo() {
+function initialiseGeneral() {
 
     console.log("Initialising Csound package:");
-    let fs = require('fs');
 
     let readlineSync = require('readline-sync');
+
     let jsonObject = {};
     let nameSuggestion = process.cwd().split("/").slice(-1)[0];
     jsonObject.name = readlineSync.question('Package name: (' + nameSuggestion + ')\n> ');
@@ -98,9 +75,19 @@ function initialiseUdo() {
         jsonObject.dependencies = [];
     }
 
+    return jsonObject;
+
+}
+
+function initialiseUdo(jsonObject) {
+
+    let fs = require('fs');
+
+    let readlineSync = require('readline-sync');
+
     jsonObject.udo = {};
     let createEntrypoint = "";
-
+    let nameSuggestion = process.cwd().split("/").slice(-1)[0];
     let suggestedFileExists = fs.existsSync("./" + nameSuggestion + ".udo");
 
     while(createEntrypoint.localeCompare("no") !== 0 && createEntrypoint.localeCompare("yes") !== 0) {
@@ -233,6 +220,8 @@ function initialiseUdo() {
 }
 
 
+
+
 function initialiseBuild(jsonObject, subtype) {
 
     let readlineSync = require('readline-sync');
@@ -243,8 +232,87 @@ function initialiseBuild(jsonObject, subtype) {
 function initialiseCsd(jsonObject) {
 
     let readlineSync = require('readline-sync');
+    let fs = require("fs");
+    jsonObject.csd = {};
 
-    console.log(jsonObject);
+    let nameEntrypoint = "";
+    let nameSuggestion = process.cwd().split("/").slice(-1)[0];
+    let suggestedFileName = "./" + nameSuggestion + ".csd";
+    let suggestedFileExists = fs.existsSync(suggestedFileName);
+
+    while(nameEntrypoint.localeCompare("no") !== 0 && nameEntrypoint.localeCompare("yes") !== 0) {
+
+        let suggestFileExists = "perhaps yes, no appropriate csd files found";
+        if (suggestedFileExists == true) {
+
+            suggestedFileExists = ", defaulting to no if it is " + nameSuggestion + ".csd";
+        }
+        nameEntrypoint = readlineSync.question("Would you like to specify entrypoint file? (yes|no)" + suggestedFileExists + "\n> ");
+
+        if (nameEntrypoint === "") {
+
+            nameEntrypoint = suggestedFileExists ? "no" : "yes";
+        }
+    }
+
+    console.log(nameEntrypoint);
+
+    let entrypointFileName = "";
+
+    if (nameEntrypoint === "yes") {
+
+        let fileExists = false;
+
+        do {
+
+            entrypointFileName = readlineSync.question("Entrypoint file name:\n> ");
+            fileExists = fs.existsSync("./" + entrypointFileName);
+
+            if (fileExists === false) {
+
+                console.log("File not found\n");
+            }
+            else {
+
+                entrypointFileName = "./" + entrypointFileName;
+            }
+
+        } while (fileExists === false);
+    }
+    else {
+
+        entrypointFileName = suggestedFileName;
+    }
+
+    jsonObject.csd.entrypoint = entrypointFileName;
+
+    let fileString = fs.readFileSync(entrypointFileName, 'utf8');
+
+    result = fileString.match(/(\$\b\S+\b)/ig);
+
+    let uniqueArray = require("./utilities").uniqueArray;
+    let macros = uniqueArray(result);
+    jsonObject.csd.macros = [];
+
+    if (macros.length > 0) {
+
+        function addMacros(macroName) {
+
+            let macroObject = {};
+            macroObject.symbol = macroName;
+
+            let response = readlineSync.question("Enter description for macro: " + macroName + "\n> ");
+            macroObject.description = response;
+            return macroObject;
+        }
+
+        for (let i = 0; i < macros.length; i++) {
+
+            jsonObject.csd.macros.push(addMacros(macros[i]));
+        }
+    }
+
+    return jsonObject;
 }
 
 module.exports.init = init;

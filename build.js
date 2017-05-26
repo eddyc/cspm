@@ -79,16 +79,20 @@ function buildReadme(cspJson) {
     + "\n\n### Version\n\n" + cspJson.version
     + "\n\n### Dependencies\n\n";
 
-    let dependencies = "";
+    let getDependencyRepoUrl = require("./utilities").getDependencyRepoUrl;
+    let dependencyUrlArray = [];
     for (let dependency in cspJson.dependencies) {
 
-        dependencies += dependency + " ";
+        dependency = cspJson.dependencies[dependency];
+        let dependencyUrl = getDependencyRepoUrl(dependency);
+        dependencyUrlArray.push("[" + dependency + "](" + dependencyUrl + ")");
     }
 
-    dependencies = dependencies.trim() === "" ? "None" : dependencies;
+    let dependencies = dependencyUrlArray.join(", ");
+
     md += dependencies + "\n\n";
 
-    if (typeof cspJson["udo"] !== undefined) {
+    if (typeof cspJson["udo"] !== 'undefined') {
 
         function writeUDOArguments(type) {
 
@@ -120,7 +124,18 @@ function buildReadme(cspJson) {
     }
     else if (typeof cspJson["csd"] !== 'undefined') {
 
-        console.log("It's a csd");
+        if (cspJson.csd.macros.length > 0) {
+
+            md += "\n## Macros \n";
+            md += "\n| Symbol | Description |\n"
+            + "|---|---|\n";
+
+            for (var i = 0; i < cspJson.csd.macros.length; i++) {
+
+                md += "| " + cspJson.csd.macros[i].symbol + " | " + cspJson.csd.macros[i].description + " |\n";
+            }
+        }
+
     }
     else {
 
@@ -129,8 +144,6 @@ function buildReadme(cspJson) {
 
 
     fs.writeFileSync(process.cwd() + "/README.md", md);
-
-    console.log(cspJson);
 }
 
 module.exports = build;

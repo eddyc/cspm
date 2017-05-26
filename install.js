@@ -1,98 +1,105 @@
-function install(fileName, packageCachePath, callback, clean) {
 
-    let packageCache = require(packageCachePath);
-    let packageJson = searchPackageCacheForPackage(fileName, packageCache);
+function install(argv, packageCache) {
 
-    if (packageJson !== false) {
+    let packageName = "";
+    let doInstallGlobal = false;
 
-        downloadPackage(fileName, packageJson, callback, clean);
+    if (argv.length === 5 && argv[3] === '-g') {
+
+        packageName = argv[4];
+        doInstallGlobal = true;
     }
     else {
 
-        console.log("Error: Package not found");
+        console.log("Error, local install not implemented");
+        process.exit();
     }
+
+    let getInstallDependencyList = require("./dependency").getInstallDependencyList;
+    let dependencies = packageCache["cspm-registry"].packages[packageName].dependencies;
+    console.log("This package will install following dependencies: ", dependencies.join(", "));
+    let dependencyList = getInstallDependencyList([packageName], packageCache);
+    let installedPackagesStatus =
+
+    installPackageList(dependencyList, packageCache, doInstallGlobal, function() {
+
+        console.log("finished\n");
+    }, function() {
+
+        console.log("Error: Somethings gone wrong, the install attempt unsuccessful.");
+    });
 }
 
-function downloadPackage(fileName, packageJson, callback, clean) {
+function installPackageList(packageList, packageCache, doInstallGlobal, doneCallback, errorCallback) {
 
-    switch (packageJson.location.type) {
+    if (packageList.length > 0) {
 
-        case "github": {
+        let currentPackage = packageList.pop();
+        installPackage(currentPackage, packageCache, doInstallGlobal, function() {
 
-            downloadPackageGithub(fileName, packageJson, callback, clean);
-            break;
+            installPackageList(packageList, packageCache, doInstallGlobal, doneCallback, errorCallback);
+        });
+    }
+    else {
+
+        doneCallback();
+    }
+}
+function movePackageFolder(packageName, downloadedPackagePath, destinationFolder) {
+
+    let fs = require("fs-extra");
+
+    if (!fs.existsSync(destinationFolder)) {
+
+        fs.mkdirSync(destinationFolder);
+    }
+
+    let destinationPath = destinationFolder + "/" + packageName;
+
+    if (fs.existsSync(destinationPath)) {
+
+        fs.removeSync(destinationPath);
+    }
+
+    let mv = require('mv');
+
+    mv(downloadedPackagePath, destinationPath, function(error) {
+
+        fs.removeSync("./download." + packageName);
+
+        if (typeof error != 'undefined') {
+
+            // console.log(error);
         }
-        default:
-    }
+    });
 }
 
-function downloadPackageGithub(fileName, packageJson, callback, clean) {
+function installPackage(packageName, packageCache, doInstallGlobal, doneCallback, errorCallback) {
 
-    let Octokit = require('octokit');
-    let gh = Octokit.new();
+    let repoPackageJson = searchPackageCacheForPackage(packageName, packageCache);
 
-    let releaseUrl = "https://github.com/" +
-    packageJson.location.user +
-    "/" +
-    packageJson.location.repository +
-    "/archive/" +
-    packageJson.version +
-    ".zip";
+    if (repoPackageJson === false) {
 
-    var fs = require('fs');
-    var request = require('request');
-    var progress = require('request-progress');
+        console.log("Package not found: " + packageName + ", try running update command");
 
-    if (!fs.existsSync(".tmp")) {
-
-        fs.mkdirSync(".tmp");
+        errorCallback();
+        return -1;
     }
 
-    let tmpFilePath = ".tmp/" + fileName + ".zip";
+    console.log("Found: " + packageName);
 
-    progress(request(releaseUrl))
-    .on('progress', function (state) {
-        // console.log('progress', state.percent);
-    })
-    .on('error', function (err) {
-        // console.log("Error");
-    })
-    .on('end', function () {
+    let downloadAndUnzipFile = require("./download").downloadAndUnzipFile;
 
-        unzipPackage(tmpFilePath, packageJson, callback, clean, fileName);
-    })
-    .pipe(fs.createWriteStream(tmpFilePath));
-}
+    downloadAndUnzipFile(packageName, repoPackageJson, function(downloadFolderPath) {
 
+        let globalPackagePath = require("./utilities").getGlobalPackagePath();
 
-function unzipPackage(packageZipPath, packageJson, callback, clean, fileName) {
+        if (doInstallGlobal === true) {
 
-    let fs = require('fs-extra');
-    let unzip = require('unzip');
-    let stream = fs.createReadStream(packageZipPath).pipe(unzip.Extract({ path: "./.tmp" }));
-
-    if (!fs.existsSync("./packages")) {
-
-        fs.mkdirSync("./packages");
-    }
-
-    stream.on('close', function() {
-
-        callback();
-
-        if (clean === true) {
-
-            const subdirectories = require('filehound').create().path(".tmp").directory().findSync();
-            let mv = require('mv');
-
-            for (let i = 0; i < subdirectories.length; i++) {
-
-                let newPath = subdirectories[i].split(".")[1].split("/")[1];
-                mv(subdirectories[i], "./packages/" + newPath, function(err) {});
-            }
-
-            fs.removeSync("./.tmp");
+            movePackageFolder(packageName, downloadFolderPath + packageName, globalPackagePath);
         }
+
+        doneCallback();
     });
 }
 
@@ -113,4 +120,10 @@ function searchPackageCacheForPackage(packageName, packageCache) {
     }
 }
 
+function uninstall(argv, packageCache) {
+
+
+}
+
 module.exports.install = install;
+module.exports.uninstall = uninstall;

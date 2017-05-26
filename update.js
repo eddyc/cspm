@@ -1,6 +1,6 @@
 function update(packageCachePath) {
 
-    let git = require(__dirname + "/node_modules/nodegit");
+    let git = require("nodegit");
     let path = require("path");
     let fs = require("fs-extra");
 
@@ -9,7 +9,7 @@ function update(packageCachePath) {
     if (!fs.existsSync(packageCachePath)) {
 
         let fileString = JSON.stringify(packageCache);
-        fs.writeFileSync(path.join(__dirname, packageCachePath), fileString);
+        fs.writeFileSync(packageCachePath, fileString);
     }
     else {
 
@@ -57,7 +57,7 @@ function downloadRepositoryGithub(url, repoPath, packageCache, currentRepo, pack
         packageCache[currentRepo.name] = repoContents;
 
         let fileString = JSON.stringify(packageCache);
-        fs.writeFileSync(path.join(__dirname, packageCachePath), fileString);
+        fs.writeFileSync(packageCachePath, fileString);
     })
     .then(function() {
 
@@ -69,4 +69,4 @@ function downloadRepositoryGithub(url, repoPath, packageCache, currentRepo, pack
     });
 }
 
-module.exports.update = update;
+module.exports = update;

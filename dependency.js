@@ -98,7 +98,7 @@ function getInstallDependencyList(dependencies, packageCache) {
             let dependencyName = dependencies[i];
             let newNode = new Node(dependencyName);
 
-            let newDependencies = packageListObject[dependencyName];
+            let newDependencies = packageListObject[dependencyName].dependencies;
             node.addEdge(newNode);
             buildTree(newDependencies, newNode);
         }
@@ -107,6 +107,7 @@ function getInstallDependencyList(dependencies, packageCache) {
     }
 
     let head = new Node('head');
+
     let tree = buildTree(dependencies, head);
 
     let result = resolveDependencyTree(tree).map(n => n.name);
