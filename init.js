@@ -23,7 +23,7 @@ function init(type) {
     }
 
     let jsonObject = initialiseGeneral();
-    
+
     switch (type) {
 
         case "udo": {
@@ -292,6 +292,8 @@ function initialiseCsd(jsonObject) {
 
     let uniqueArray = require("./utilities").uniqueArray;
     let macros = uniqueArray(result);
+    macros = macros.map(y => { return y.substr(1)});
+    
     jsonObject.csd.macros = [];
 
     if (macros.length > 0) {

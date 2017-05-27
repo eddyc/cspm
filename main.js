@@ -74,6 +74,13 @@
 
             break;
         }
+        case "run": {
+
+            let run = require("./run");
+            let packageName = process.argv[3];
+            run(packageName, process.argv);
+            break;
+        }
 
         case "build": {
 
@@ -94,7 +101,7 @@
 
             console.log("Usage:");
             console.log("cspm update");
-            console.log("cspm install");
+            // console.log("cspm install");
             console.log("cspm install -g <package-name>");
         }
     }

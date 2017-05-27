@@ -24,7 +24,7 @@ or
 cspm init csd
 ```
 
-This will initialise a setup guide to create a UDO or CSD cpm.json file. If the cpm.json already exists the setup script will try to ascertain information about the module such as name and the various inputs/outputs/macros. If not, these can be manually specified using the command prompt.
+This will initialise a setup guide to create a UDO or CSD cspm.json file. If the cspm.json already exists the setup script will try to ascertain information about the module such as name and the various inputs/outputs/macros. If not, these can be manually specified using the command prompt.
 
 For both UDOs and CSDs the init command creates a csp.json file containing the name, version, author, email and description information. For UDOs the various inputs and outputs are also enumerated. For each input/output the name, type, rate, description, maximum and minimum values are also recorded. For CSDs the macros within the file are enumerated and a description of each macro may also be provided.
 
@@ -45,15 +45,37 @@ cspm update
  cspm build readme
 
  ```
- 
+
 No other build commands are implemented at this time.
 
 ### Install
 
 Packages may be installed globally using the following command:
+
 ``` javascript
+
 cspm install -g MyGreatPackage
+
 ```
 Packages are installed to the directory specified as Csound's INCDIR environmental variable, this variable must be specified or the installation of packages will fail. If a package to be install contains dependencies, these dependencies will also be installed.
 
 Installing packages locally (e.g in arbitrary folders) is currently unimplemented.
+
+### Linking
+
+Installed csd packages may be linked to the /usr/local/bin path enabling the calling of csd files in a similar fashion to bash scripts. Arguments may be passed to csd files if the csd file contains defined macros, the script will prompt for the macro values when it have been run, csd packages may be linked using the link command:
+``` javascript
+
+cspm link MyGreatPackage
+
+```
+
+The csd may then be invoked using the following command:
+
+``` javascript
+
+MyGreatPackage arg1 arg2 ... argN
+
+```
+
+If arguments are needed for the specified macros the script will prompt the user to enter each one, if the script is already given the correct number of arguments it will just run normally.
