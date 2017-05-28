@@ -79,3 +79,18 @@ MyGreatPackage arg1 arg2 ... argN
 ```
 
 If arguments are needed for the specified macros the script will prompt the user to enter each one, if the script is already given the correct number of arguments it will just run normally.
+
+### Adding Packages
+
+CSPM currently supports downloading packages from Github.
+Packages may be added to CPSM by first creating a repository for the UDO or CSD file, creating the relevant csp.json and README.md files and tagging a release for the package. Secondly the package must be added to the cspm-registry located at [https://github.com/eddyc/cspm-registry](https://github.com/eddyc/cspm-registry).
+
+The cpsm-registry is a single json file that catalogues every available package to CSPM. Each package information object added to the CSPM registry must contain the following keys and values:
+
+| Key | Value |
+|---|---|
+| release | The release tag (e.g. 1.0.0) |
+| dependencies | The packages this package depends on, if any |
+| description | A brief description of the package |
+| type | The package type, csd or udo |
+| location | Where the package is located, currently only github is supported |
