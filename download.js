@@ -115,7 +115,6 @@ function unzipFile(filePath, folderPath, finishedCallback) {
 
         finishedCallback();
     });
-
 }
 
 function renameUnzippedDirectory(newName, folderPath) {
@@ -125,7 +124,6 @@ function renameUnzippedDirectory(newName, folderPath) {
     let newPath = folderPath + newName;
 
     for (let i = 0; i < subdirectories.length; i++) {
-
 
         if (subdirectories[i].includes(newPath.split("/")[2]) === true) {
             let mv = require('mv');
