@@ -1,4 +1,4 @@
-function downloadFile(url, destinationFolder, fileName, finishedCallback) {
+function downloadFile(user, url, destinationFolder, fileName, finishedCallback) {
 
     var fs = require('fs');
     var request = require('request');
@@ -11,12 +11,19 @@ function downloadFile(url, destinationFolder, fileName, finishedCallback) {
 
     let filePath = destinationFolder + fileName;
 
-    progress(request(url))
+    var options = {
+        host: 'api.github.com',
+        path: '/users/' + user + '/repos',
+        method: 'GET',
+        headers: {'user-agent': 'node.js'}
+    };
+
+    progress(request(url, options))
     .on('progress', function (state) {
-        // console.log('progress', state.percent);
+
+        console.log(state);
     })
     .on('error', function (err) {
-        // console.log("Error");
     })
     .on('end', function () {
 
@@ -26,13 +33,14 @@ function downloadFile(url, destinationFolder, fileName, finishedCallback) {
 
 }
 
-function downloadAndUnzipFile(packageName, repoPackageJson, callback) {
+function downloadAndUnzipFile(packageCoordinates, callback) {
 
-    downloadPackage(packageName, repoPackageJson, function(filePath, folderPath) {
+    downloadPackage(packageCoordinates, function(filePath, folderPath) {
+
 
         unzipFile(filePath, folderPath, function() {
 
-            let newPath = renameUnzippedDirectory(packageName, folderPath);
+            let newPath = renameUnzippedDirectory(packageCoordinates.repo, folderPath);
 
             let fs = require('fs');
             fs.unlinkSync(filePath);
@@ -43,34 +51,39 @@ function downloadAndUnzipFile(packageName, repoPackageJson, callback) {
     });
 }
 
-function downloadPackage(fileName, packageJson, finishedCallback) {
+function downloadPackage(packageCoordinates, finishedCallback) {
 
-    let downloadFolderPath = "./download." + fileName + "/";
-
+    let downloadFolderPath = "./download." + packageCoordinates.repo + "/";
     let fs = require("fs-extra");
     if (fs.existsSync(downloadFolderPath)) {
 
         fs.removeSync(downloadFolderPath);
     }
 
-    switch (packageJson.location.type) {
+    let releaseUrl = "";
 
-        case "github": {
+    if (packageCoordinates.version === "latest") {
 
-            let releaseUrl = "https://github.com/" +
-            packageJson.location.user +
-            "/" +
-            packageJson.location.repository +
-            "/archive/" +
-            packageJson.version +
-            ".zip";
-
-            downloadFile(releaseUrl, downloadFolderPath, fileName + ".zip", finishedCallback)
-
-            break;
-        }
-        default:
+        releaseUrl = "https://api.github.com/repos/" +
+        packageCoordinates.user +
+        "/" +
+        packageCoordinates.repo +
+        "/zipball";
     }
+    else {
+
+        releaseUrl = "https://github.com/" +
+        packageCoordinates.user +
+        "/" +
+        packageCoordinates.repo +
+        "/archive/" +
+        packageCoordinates.version +
+        ".zip";
+    }
+
+    // console.log("Release url is : " + releaseUrl);
+    downloadFile(packageCoordinates.user, releaseUrl, downloadFolderPath, packageCoordinates.repo + ".zip", finishedCallback)
+
 }
 
 function unzipPackage(packageZipPath, packageJson, callback, clean, fileName) {

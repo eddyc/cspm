@@ -10,35 +10,13 @@
 
     let option = process.argv[2];
 
-    let packageCachePath = __dirname + "/package-cache.json";
-
-    if (option === "update") {
-
-        let update = require("./update");
-        update(packageCachePath);
-        console.log("Done.");
-        return 0;
-    }
-
-    let packageCache;
-
-    try {
-
-        packageCache = require(packageCachePath);
-    }
-    catch (error) {
-
-        console.log("There is currently no Csound package list available, please run: cspm update");
-        return -1;
-    }
-
     switch (option) {
 
         case "install": {
 
 
             let install = require("./install").install;
-            let result = install(process.argv, packageCache);
+            let result = install(process.argv);
             return result;
             break;
         }

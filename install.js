@@ -1,60 +1,112 @@
+function getPackageCoordinates(string) {
 
-function install(argv, packageCache) {
+    let splitString = string.split("/");
+    let packageCoordinates = {};
 
-    let packageName = "";
-    let doInstallGlobal = false;
+    if (splitString.length < 2 || splitString.length > 3) {
 
-    if (argv.length === 5 && argv[3] === '-g') {
+        console.log("Error, package coordinates malformed either specify name/repo or name/repo/version\nExiting");
+        return;
+    }
 
-        packageName = argv[4];
-        doInstallGlobal = true;
+    packageCoordinates.count = splitString.length;
+    packageCoordinates.user = splitString[0];
+    packageCoordinates.repo = splitString[1];
+
+    if (splitString.length == 3) {
+
+        packageCoordinates.version = splitString[2];
     }
     else {
 
-        console.log("Error, local install not implemented");
+        packageCoordinates.version = "latest";
+    }
+    return packageCoordinates;
+}
+function install(argv) {
+
+    let packageCoordinates = {};
+    let doInstallGlobal = true;
+
+    if (argv.length === 4) {
+
+        packageCoordinates = getPackageCoordinates(argv[3]);
+    }
+    else {
+
+        console.log("Error, install command requires package coordinates, e.g: cspm install name/repo/version\nExiting");
         process.exit();
     }
 
-    let getInstallDependencyList = require("./dependency").getInstallDependencyList;
-    let dependencies = packageCache["cspm-registry"].packages[packageName].dependencies;
-    console.log("This package will install following dependencies: ", dependencies.join(", "));
-    let dependencyList = getInstallDependencyList([packageName], packageCache);
-    let installedPackagesStatus =
+    let packageInstalled = [];
 
-    installPackageList(dependencyList, packageCache, doInstallGlobal, function() {
+    let installRecursive = function(cspJson){
 
-        console.log("finished\n");
-    }, function() {
 
-        console.log("Error: Somethings gone wrong, the install attempt unsuccessful.");
+        for (let i = 0; i < cspJson.dependencies.length; ++i) {
+
+            let dependencyCoordinates = getPackageCoordinates(cspJson.dependencies[i]);
+
+            if (packageInstalled.indexOf(dependencyCoordinates) === -1) {
+
+                installPackage(dependencyCoordinates, installRecursive);
+                packageInstalled.push(dependencyCoordinates);
+            }
+        }
+    }
+
+    installPackage(packageCoordinates, installRecursive, function(){console.log("error");});
+}
+
+
+function installPackage(packageCoordinates, doneCallback, errorCallback) {
+
+    let downloadAndUnzipFile = require("./download").downloadAndUnzipFile;
+
+    downloadAndUnzipFile(packageCoordinates, function(downloadFolderPath) {
+
+        let cspJson = require(downloadFolderPath + packageCoordinates.repo + "/csp.json");
+        let globalPackagePath = require("./utilities").getGlobalPackagePath();
+        let destinationFolder = globalPackagePath + "/" + packageCoordinates.repo;
+        let destinationPath = destinationFolder  + "/Versions/" + cspJson.version;
+        let fs = require("fs-extra");
+
+        if (fs.existsSync(destinationPath) === false) {
+
+            movePackageFolder(packageCoordinates.repo, downloadFolderPath + packageCoordinates.repo, destinationFolder, cspJson);
+        }
+        else {
+
+            fs.removeSync(downloadFolderPath);
+        }
+
+
+        doneCallback(cspJson);
     });
 }
 
-function installPackageList(packageList, packageCache, doInstallGlobal, doneCallback, errorCallback) {
+function getEntrypoint(cspJson) {
 
-    if (packageList.length > 0) {
+    if (typeof cspJson.csd !== 'undefined') {
 
-        let currentPackage = packageList.pop();
-        installPackage(currentPackage, packageCache, doInstallGlobal, function() {
+        return cspJson.csd.entrypoint;
+    }
+    else if (typeof cspJson.udo !== 'undefined') {
 
-            installPackageList(packageList, packageCache, doInstallGlobal, doneCallback, errorCallback);
-        });
+        return cspJson.udo.entrypoint;
     }
     else {
 
-        doneCallback();
+        console.log("Error, could not find entrypoint\nExiting");
+        process.exit();
     }
 }
-function movePackageFolder(packageName, downloadedPackagePath, destinationFolder) {
+function movePackageFolder(packageName, downloadedPackagePath, destinationFolder, cspJson) {
 
     let fs = require("fs-extra");
 
-    if (!fs.existsSync(destinationFolder)) {
-
-        fs.mkdirSync(destinationFolder);
-    }
-
-    let destinationPath = destinationFolder + "/" + packageName;
+    let destinationPath = destinationFolder  + "/Versions/" + cspJson.version;
+    fs.ensureDirSync(destinationPath);
 
     if (fs.existsSync(destinationPath)) {
 
@@ -66,64 +118,20 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
     mv(downloadedPackagePath, destinationPath, function(error) {
 
         fs.removeSync("./download." + packageName);
+        let destination = destinationFolder + "/" + getEntrypoint(cspJson);
+        let source = destinationPath + "/" + getEntrypoint(cspJson);
+
+        if (fs.existsSync(destination)) {
+
+            fs.removeSync(destination);
+        }
+
+        fs.symlinkSync(source, destination);
 
         if (typeof error != 'undefined') {
 
-            // console.log(error);
         }
     });
-}
-
-function installPackage(packageName, packageCache, doInstallGlobal, doneCallback, errorCallback) {
-
-    let repoPackageJson = searchPackageCacheForPackage(packageName, packageCache);
-
-    if (repoPackageJson === false) {
-
-        console.log("Package not found: " + packageName + ", try running update command");
-
-        errorCallback();
-        return -1;
-    }
-
-    console.log("Found: " + packageName);
-
-    let downloadAndUnzipFile = require("./download").downloadAndUnzipFile;
-
-    downloadAndUnzipFile(packageName, repoPackageJson, function(downloadFolderPath) {
-
-        let globalPackagePath = require("./utilities").getGlobalPackagePath();
-
-        if (doInstallGlobal === true) {
-
-            movePackageFolder(packageName, downloadFolderPath + packageName, globalPackagePath);
-        }
-
-        doneCallback();
-    });
-}
-
-function searchPackageCacheForPackage(packageName, packageCache) {
-
-    for (let i in packageCache) {
-
-        let packages = packageCache[i].packages;
-
-        if (typeof packages[packageName] != 'undefined') {
-
-            return packages[packageName];
-        }
-        else {
-
-            return false;
-        }
-    }
-}
-
-function uninstall(argv, packageCache) {
-
-
 }
 
 module.exports.install = install;
-module.exports.uninstall = uninstall;
