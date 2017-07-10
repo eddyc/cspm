@@ -13,57 +13,21 @@ function build(buildType) {
         case 'readme': {
 
             buildReadme(cspJson);
+            break;
         }
+        case 'README': {
 
-        default:
+            buildReadme(cspJson);
+            break;
+        }
+        default: {
 
+            console.log("Error no valid options specified, exiting");
+        }
     }
 }
 
 
-function buildCsd(cspJson) {
-
-
-    let buildObject = cspJson["csd"];
-
-    let getBuildDependencyList = require("./dependency").getBuildDependencyList;
-
-    getBuildDependencyList();
-
-    console.log(buildObject);
-
-    let xmlbuilder = require("xmlbuilder");
-
-    let csoptionsString = "\n";
-
-    if (typeof buildObject.csoptions !== 'undefined') {
-
-        for (let i = 0; i < buildObject.csoptions.length; i++) {
-
-            csoptionsString += " -" + buildObject.csoptions[i];
-        }
-    }
-
-
-    csoptionsString += "\n";
-
-    for (let i = 0; i < buildObject.instruments.length; i++) {
-
-        console.log(buildObject.instruments[i]);
-    }
-
-
-    let xml = xmlbuilder.create('CsoundSynthesizer', {
-        headless:true
-    })
-    .ele('CsOptions')
-    .txt(csoptionsString).up()
-    .ele('CsInstruments')
-    .txt("stuff").up()
-    .end({pretty: true});
-
-    console.log(xml);
-}
 
 function buildReadme(cspJson) {
 
@@ -76,16 +40,22 @@ function buildReadme(cspJson) {
     + cspJson.author
     + "\n\n### Email" + "\n\n"
     + cspJson.email
+    + "\n\n### Github Username\n\n" + cspJson.user
+    + "\n\n### Github Repository Name\n\n" + cspJson.repo
     + "\n\n### Version\n\n" + cspJson.version
     + "\n\n### Dependencies\n\n";
 
-    let getDependencyRepoUrl = require("./utilities").getDependencyRepoUrl;
+    let getPackageCoordinates = require("./utilities").getPackageCoordinates;
     let dependencyUrlArray = [];
     for (let dependency in cspJson.dependencies) {
 
         dependency = cspJson.dependencies[dependency];
-        let dependencyUrl = getDependencyRepoUrl(dependency);
-        dependencyUrlArray.push("[" + dependency + "](" + dependencyUrl + ")");
+        let packageCoordinates = getPackageCoordinates(dependency);
+        let dependencyUrl = "https://www.github.com/";
+        dependencyUrl += packageCoordinates.user;
+        dependencyUrl += "/" + packageCoordinates.repo;
+
+        dependencyUrlArray.push("[" + packageCoordinates.repo + "](" + dependencyUrl + ")");
     }
 
     let dependencies = dependencyUrlArray.join(", ");

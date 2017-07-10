@@ -49,6 +49,8 @@ function init(type) {
 
     let fileName = 'csp.json';
 
+    console.log(jsonObject);
+
     jsonfile.writeFileSync(fileName, jsonObject);
 }
 
@@ -62,13 +64,17 @@ function initialiseGeneral() {
     let nameSuggestion = process.cwd().split("/").slice(-1)[0];
     jsonObject.name = readlineSync.question('Package name: (' + nameSuggestion + ')\n> ');
     jsonObject.name = jsonObject.name === "" ? nameSuggestion : jsonObject.name;
+    jsonObject.user = readlineSync.question('Github username: \n> ');
+    jsonObject.repo = readlineSync.question('Github repo: (' + nameSuggestion + ')\n> ');
+    jsonObject.repo = jsonObject.repo === "" ? nameSuggestion : jsonObject.repo;
+
     jsonObject.version = readlineSync.question('Version: (1.0.0)\n> ');
     jsonObject.version = jsonObject.version === "" ? "1.0.0" : jsonObject.version;
     jsonObject.author = readlineSync.question('Author: \n> ');
     jsonObject.email = readlineSync.question('Email: \n> ');
     jsonObject.description = readlineSync.question('Description: (Audio DSP using Csound)\n> ');
     jsonObject.description = jsonObject.description === "" ? "Audio DSP using Csound" : jsonObject.description;
-    jsonObject.dependencies = readlineSync.question('Dependencies seperated by commas:\n> ').split(',').map(s => s.trim());
+    jsonObject.dependencies = readlineSync.question('Dependencies as package coordinates seperated by commas ("user/repo/version", ...):\n> ').split(',').map(s => s.trim());
 
     if (jsonObject.dependencies.length === 1 && jsonObject.dependencies[0] === "") {
 
@@ -87,7 +93,8 @@ function initialiseUdo(jsonObject) {
 
     jsonObject.udo = {};
     let createEntrypoint = "";
-    let nameSuggestion = process.cwd().split("/").slice(-1)[0];
+    let nameSuggestion = process.cwd().split("/").slice(-1)[0].split(".")[0];
+
     let suggestedFileExists = fs.existsSync("./" + nameSuggestion + ".udo");
 
     while(createEntrypoint.localeCompare("no") !== 0 && createEntrypoint.localeCompare("yes") !== 0) {
@@ -180,16 +187,17 @@ function initialiseUdo(jsonObject) {
 
         jsonObject.udo.inputs = createArguments('input');
         jsonObject.udo.outputs = createArguments('output');
+
     }
     else {
 
-        let entrypointFileName = "";
+        let entrypointFileName = process.cwd() + "/" + nameSuggestion + ".udo";
 
-        do {
+        while(entrypointFileName === false) {
 
             entrypointFileName = readlineSync.question("Entrypoint file name:\n> ")
+
         }
-        while(fs.existsSync("./" + entrypointFileName) === false);
 
 
         jsonObject.udo.entrypoint = entrypointFileName;
@@ -197,21 +205,21 @@ function initialiseUdo(jsonObject) {
         let udoEntrypoint = fs.readFileSync(jsonObject.udo.entrypoint, 'utf8');
         let udoEntryPointLines = udoEntrypoint.split('\n');
 
+        jsonObject.udo.inputs = [];
+        jsonObject.udo.outputs = [];
+
         for (let i = 0; i < udoEntryPointLines.length; i++) {
 
-            let replacement = "";
-            jsonObject.udo.inputs = [];
-            jsonObject.udo.outputs = [];
 
             if (udoEntryPointLines[i].includes("xin")) {
 
                 let inputs = udoEntryPointLines[i].replace("xin", "").split(",").map(s => s.trim());
-                jsonObject.udo.inputs = processArguments(inputs)
+                jsonObject.udo.inputs = processArguments(inputs);
             }
             else if (udoEntryPointLines[i].includes("xout")) {
 
                 let outputs = udoEntryPointLines[i].replace("xout", "").split(",").map(s => s.trim());
-                jsonObject.udo.outputs = processArguments(outputs)
+                jsonObject.udo.outputs = processArguments(outputs);
             }
         }
     }
@@ -293,7 +301,7 @@ function initialiseCsd(jsonObject) {
     let uniqueArray = require("./utilities").uniqueArray;
     let macros = uniqueArray(result);
     macros = macros.map(y => { return y.substr(1)});
-    
+
     jsonObject.csd.macros = [];
 
     if (macros.length > 0) {

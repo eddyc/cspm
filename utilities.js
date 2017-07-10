@@ -47,30 +47,40 @@ function askQuestion(question, answers, defaultAnswerIndex) {
     return response;
 }
 
+function getPackageCoordinates(string) {
 
+    let splitString = string.split("/");
+    let packageCoordinates = {};
 
-function getDependencyRepoUrl(dependency) {
+    if (splitString.length < 2 || splitString.length > 3) {
 
-    let packageCachePath = __dirname + "/package-cache.json";
-
-    if (typeof packageCachePath === 'undefined') {
-
-        console.log("No package lists available, run: cspm update");
-        process.exit();
+        console.log("Error, package coordinates malformed either specify name/repo or name/repo/version\nExiting");
+        return;
     }
 
-    let packageCache = require(packageCachePath);
+    packageCoordinates.count = splitString.length;
+    packageCoordinates.user = splitString[0];
+    packageCoordinates.repo = splitString[1];
 
-    let dependencyLocationInfo = packageCache["cspm-registry"].packages[dependency].location;
+    if (splitString.length == 3) {
 
+        packageCoordinates.version = splitString[2];
+    }
+    else {
+
+        packageCoordinates.version = "latest";
+    }
+    return packageCoordinates;
+}
+
+function getDependencyRepoUrl(dependencyCoordinates) {
+
+    let packageCoordinates = getPackageCoordinates(dependencyCoordinates);
     let dependencyUrl = "";
 
-    if (dependencyLocationInfo.type === "github") {
-
-        dependencyUrl += "https://www.github.com/";
-        dependencyUrl += dependencyLocationInfo.user;
-        dependencyUrl += "/" + dependencyLocationInfo.repository;
-    }
+    dependencyUrl += "https://www.github.com/";
+    dependencyUrl += packageCoordinates.user;
+    dependencyUrl += "/" + packageCoordinates.repo;
 
     return dependencyUrl;
 }
@@ -124,5 +134,6 @@ module.exports = {
     "askQuestion" : askQuestion,
     "getDependencyRepoUrl" : getDependencyRepoUrl,
     "uniqueArray" : uniqueArray,
-    "getInstalledPackages" : getInstalledPackages
+    "getInstalledPackages" : getInstalledPackages,
+    "getPackageCoordinates" : getPackageCoordinates
 };

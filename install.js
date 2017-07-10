@@ -38,24 +38,29 @@ function install(argv) {
         process.exit();
     }
 
-    let packageInstalled = [];
+    let packageInstalled = [argv[3]];
+
+    console.log("Installing: " + packageCoordinates.repo);
+
 
     let installRecursive = function(cspJson){
 
-
+        console.log("Installed: " + cspJson.name);
         for (let i = 0; i < cspJson.dependencies.length; ++i) {
 
             let dependencyCoordinates = getPackageCoordinates(cspJson.dependencies[i]);
 
             if (packageInstalled.indexOf(dependencyCoordinates) === -1) {
 
+                console.log("Installing dependency: " + dependencyCoordinates.repo);
+
                 installPackage(dependencyCoordinates, installRecursive);
-                packageInstalled.push(dependencyCoordinates);
+                packageInstalled.push(cspJson.dependencies[i]);
             }
         }
     }
 
-    installPackage(packageCoordinates, installRecursive, function(){console.log("error");});
+    installPackage(packageCoordinates, installRecursive, function(){console.log("Error installing packages.");});
 }
 
 

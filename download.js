@@ -21,7 +21,7 @@ function downloadFile(user, url, destinationFolder, fileName, finishedCallback) 
     progress(request(url, options))
     .on('progress', function (state) {
 
-        console.log(state);
+        // console.log(state);
     })
     .on('error', function (err) {
     })
