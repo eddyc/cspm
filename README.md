@@ -64,6 +64,8 @@ Packages are installed to the directory specified as Csound's INCDIR environment
 
 ### Linking
 
+#### macOS and Linux only
+
 Installed csd packages may be linked to the /usr/local/bin path enabling the calling of csd files in a similar fashion to bash scripts. Arguments may be passed to csd files if the csd file contains defined macros, the script will prompt for the macro values when it have been run, csd packages may be linked using the link command:
 
 ``` javascript

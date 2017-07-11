@@ -39,9 +39,11 @@
         }
         case "link": {
 
+            if (isWin === true) {
 
-            console.log("Error: link not supported on windows, exiting");
-            process.exit(-1);
+                console.log("Error: link not supported on windows, exiting");
+                process.exit(-1);
+            }
 
             if (process.argv.length === 4) {
 
@@ -59,8 +61,11 @@
         }
         case "run": {
 
-            console.log("Error: run not supported on windows, exiting");
-            process.exit(-1);
+            if (isWin === true) {
+
+                console.log("Error: link not supported on windows, exiting");
+                process.exit(-1);
+            }
 
             let run = require("./run");
             let packageName = process.argv[3];
