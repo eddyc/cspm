@@ -11,6 +11,8 @@ CSPM is available from the npm registry and can be installed globally with the f
 npm install -g cspm
 ```
 
+Csound's INCDIR variable must then be set in your path. This is the location where packages are installed.
+
 ## Commands
 
 ### Initialisation
