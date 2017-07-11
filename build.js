@@ -5,11 +5,6 @@ function build(buildType) {
 
     switch (buildType) {
 
-        case 'csd': {
-
-            buildCsd(cspJson);
-            break;
-        }
         case 'readme': {
 
             buildReadme(cspJson);

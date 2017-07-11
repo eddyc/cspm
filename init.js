@@ -93,16 +93,16 @@ function initialiseUdo(jsonObject) {
 
     jsonObject.udo = {};
     let createEntrypoint = "";
-    let nameSuggestion = process.cwd().split("/").slice(-1)[0].split(".")[0];
+    let nameSuggestion = process.cwd().split("/").slice(-1)[0].split(".")[0] + ".udo";
 
-    let suggestedFileExists = fs.existsSync("./" + nameSuggestion + ".udo");
+    let suggestedFileExists = fs.existsSync("./" + nameSuggestion);
 
     while(createEntrypoint.localeCompare("no") !== 0 && createEntrypoint.localeCompare("yes") !== 0) {
 
         let suggestFileExists = "perhaps yes, no appropriate udo files found";
         if (suggestedFileExists == true) {
 
-            suggestedFileExists = " perhaps not, " + nameSuggestion + ".udo exists";
+            suggestedFileExists = " perhaps not, " + nameSuggestion + " exists";
         }
         createEntrypoint = readlineSync.question("Would you like to create a skeleton entrypoint file? (yes|no)" + suggestedFileExists + "\n> ")
     }
@@ -171,9 +171,10 @@ function initialiseUdo(jsonObject) {
         return argumentsData;
     }
 
+
+
     if (createEntrypoint === "yes") {
 
-        nameSuggestion += ".udo";
         jsonObject.udo.entrypoint = readlineSync.question('Entrypoint file name: (' + nameSuggestion + ')\n> ');
         jsonObject.udo.entrypoint = jsonObject.udo.entrypoint === "" ? nameSuggestion : jsonObject.udo.entrypoint;
 
@@ -191,16 +192,10 @@ function initialiseUdo(jsonObject) {
     }
     else {
 
-        let entrypointFileName = process.cwd() + "/" + nameSuggestion + ".udo";
 
-        while(entrypointFileName === false) {
+        jsonObject.udo.entrypoint = readlineSync.question('Entrypoint file name: (' + nameSuggestion + ')\n> ')
+        jsonObject.udo.entrypoint = jsonObject.udo.entrypoint === "" ? nameSuggestion : jsonObject.udo.entrypoint;
 
-            entrypointFileName = readlineSync.question("Entrypoint file name:\n> ")
-
-        }
-
-
-        jsonObject.udo.entrypoint = entrypointFileName;
 
         let udoEntrypoint = fs.readFileSync(jsonObject.udo.entrypoint, 'utf8');
         let udoEntryPointLines = udoEntrypoint.split('\n');
@@ -244,17 +239,19 @@ function initialiseCsd(jsonObject) {
     jsonObject.csd = {};
 
     let nameEntrypoint = "";
-    let nameSuggestion = process.cwd().split("/").slice(-1)[0];
-    let suggestedFileName = "./" + nameSuggestion + ".csd";
-    let suggestedFileExists = fs.existsSync(suggestedFileName);
+    let nameSuggestion = process.cwd().split("/").slice(-1)[0].split(".")[0];
+    let suggestedFileName = nameSuggestion + ".csd";
+
+    let suggestedFileExists = fs.existsSync(process.cwd() + "/" + suggestedFileName);
 
     while(nameEntrypoint.localeCompare("no") !== 0 && nameEntrypoint.localeCompare("yes") !== 0) {
 
         let suggestFileExists = "perhaps yes, no appropriate csd files found";
         if (suggestedFileExists == true) {
 
-            suggestedFileExists = ", defaulting to no if it is " + nameSuggestion + ".csd";
+            suggestedFileExists = ", defaulting to no if it is the existing file " + nameSuggestion + ".csd";
         }
+
         nameEntrypoint = readlineSync.question("Would you like to specify entrypoint file? (yes|no)" + suggestedFileExists + "\n> ");
 
         if (nameEntrypoint === "") {
@@ -262,8 +259,6 @@ function initialiseCsd(jsonObject) {
             nameEntrypoint = suggestedFileExists ? "no" : "yes";
         }
     }
-
-    console.log(nameEntrypoint);
 
     let entrypointFileName = "";
 

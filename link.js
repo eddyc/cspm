@@ -9,11 +9,15 @@ function link(packageName) {
     }
     else {
 
-        let cspJson = require(process.env.INCDIR + "/" + packageName  + "/csp.json");
+        const fs = require("fs");
+        
+        let packageDirectory = process.env.INCDIR + "/" + packageName;
+        let cspJson = require(fs.realpathSync(packageDirectory) + "/csp.json");
+
 
         if (typeof cspJson.udo !== 'undefined') {
 
-            console.log("Error, cannot currently link UDOs");
+            console.log("Error, cannot link UDOs");
         }
         else if (typeof cspJson.csd !== 'undefined') {
 
@@ -24,7 +28,6 @@ function link(packageName) {
             fs.writeFile(filePath, '#!/usr/bin/env bash\ncspm run ' + cspJson.name + ' "$@"', function (err) {
                 if (err) throw err;
                 fs.chmodSync(filePath, '755');
-
             });
 
         }

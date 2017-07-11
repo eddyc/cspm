@@ -28,42 +28,44 @@ This will initialise a setup guide to create a UDO or CSD cspm.json file. If the
 
 For both UDOs and CSDs the init command creates a csp.json file containing the name, version, author, email and description information. For UDOs the various inputs and outputs are also enumerated. For each input/output the name, type, rate, description, maximum and minimum values are also recorded. For CSDs the macros within the file are enumerated and a description of each macro may also be provided.
 
-### Update
-
-A list of available packages must be downloaded from the CSPM registry using the update command before packages can be downloaded. This can be done using the following command:
-
-``` javascript
-cspm update
-```
 
 ### Build
-+ #### ReadMe
- If a csp.json file exists inside of a package a README.md file may be generated automatically from the data by invoking:
 
- ``` javascript
+#### ReadMe
 
- cspm build readme
+If a csp.json file exists inside of a package a README.md file may be generated automatically from the data by invoking:
 
- ```
+``` javascript
+
+cspm build readme
+
+```
 
 No other build commands are implemented at this time.
 
 ### Install
 
-Packages may be installed globally using the following command:
+Packages may be installed using the following command:
 
 ``` javascript
 
-cspm install -g MyGreatPackage
+cspm install user/repo/version
+
+```
+or to install latest
+
+``` javascript
+
+cspm install user/repo
 
 ```
 Packages are installed to the directory specified as Csound's INCDIR environmental variable, this variable must be specified or the installation of packages will fail. If a package to be install contains dependencies, these dependencies will also be installed.
 
-Installing packages locally (e.g in arbitrary folders) is currently unimplemented.
 
 ### Linking
 
 Installed csd packages may be linked to the /usr/local/bin path enabling the calling of csd files in a similar fashion to bash scripts. Arguments may be passed to csd files if the csd file contains defined macros, the script will prompt for the macro values when it have been run, csd packages may be linked using the link command:
+
 ``` javascript
 
 cspm link MyGreatPackage
@@ -79,18 +81,3 @@ MyGreatPackage arg1 arg2 ... argN
 ```
 
 If arguments are needed for the specified macros the script will prompt the user to enter each one, if the script is already given the correct number of arguments it will just run normally.
-
-### Adding Packages
-
-CSPM currently supports downloading packages from Github.
-Packages may be added to CPSM by first creating a repository for the UDO or CSD file, creating the relevant csp.json and README.md files and tagging a release for the package. Secondly the package must be added to the cspm-registry located at [https://github.com/eddyc/cspm-registry](https://github.com/eddyc/cspm-registry).
-
-The cpsm-registry is a single json file that catalogues every available package to CSPM. Each package information object added to the CSPM registry must contain the following keys and values:
-
-| Key | Value |
-|---|---|
-| release | The release tag (e.g. 1.0.0) |
-| dependencies | The packages this package depends on, if any |
-| description | A brief description of the package |
-| type | The package type, csd or udo |
-| location | Where the package is located, currently only github is supported |

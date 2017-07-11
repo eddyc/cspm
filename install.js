@@ -60,7 +60,7 @@ function install(argv) {
         }
     }
 
-    installPackage(packageCoordinates, installRecursive, function(){console.log("Error installing packages.");});
+    installPackage(packageCoordinates, installRecursive, function(){console.log("error");});
 }
 
 
@@ -70,7 +70,8 @@ function installPackage(packageCoordinates, doneCallback, errorCallback) {
 
     downloadAndUnzipFile(packageCoordinates, function(downloadFolderPath) {
 
-        let cspJson = require(downloadFolderPath + packageCoordinates.repo + "/csp.json");
+        let cspJsonPath = process.cwd() + "/" + downloadFolderPath + packageCoordinates.repo + "/csp.json";
+        let cspJson = require(cspJsonPath);
         let globalPackagePath = require("./utilities").getGlobalPackagePath();
         let destinationFolder = globalPackagePath + "/" + packageCoordinates.repo;
         let destinationPath = destinationFolder  + "/Versions/" + cspJson.version;
@@ -123,15 +124,23 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
     mv(downloadedPackagePath, destinationPath, function(error) {
 
         fs.removeSync("./download." + packageName);
-        let destination = destinationFolder + "/" + getEntrypoint(cspJson);
-        let source = destinationPath + "/" + getEntrypoint(cspJson);
 
-        if (fs.existsSync(destination)) {
+        function symlink(filePath) {
 
-            fs.removeSync(destination);
+            let destination = destinationFolder + "/" + filePath;
+            let source = destinationPath + "/" + filePath;
+
+            if (fs.existsSync(destination)) {
+
+                fs.removeSync(destination);
+            }
+
+            fs.symlinkSync(source, destination);
         }
 
-        fs.symlinkSync(source, destination);
+        symlink(getEntrypoint(cspJson));
+        symlink("csp.json")
+        symlink("README.md")
 
         if (typeof error != 'undefined') {
 

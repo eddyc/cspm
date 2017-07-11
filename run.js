@@ -1,8 +1,9 @@
 
 function run(csdPackageName, argv) {
 
+    let fs = require("fs");
     let packageDirectory = process.env.INCDIR + "/" + csdPackageName;
-    let cspJson = require(packageDirectory + "/csp.json");
+    let cspJson = require(fs.realpathSync(packageDirectory) + "/csp.json");
 
     if (typeof cspJson.udo !== 'undefined') {
 
@@ -49,22 +50,19 @@ function run(csdPackageName, argv) {
         }
     }
 
-    const csound = require('csound-api');
-    const Csound = csound.Create()
+    let command = compileArguments.join(" ");
+    console.log(command);
 
-    console.log(compileArguments);
-    csound.CompileArgs(Csound, compileArguments);
 
-    if (csound.Start(Csound) === csound.SUCCESS) {
-
-        csound.Perform(Csound);
+    const exec = require('child_process').exec;
+    const child = exec(command,
+        (error, stdout, stderr) => {
+            console.log(`stdout: ${stdout}`);
+            console.log(`stderr: ${stderr}`);
+            if (error !== null) {
+                console.log(`exec error: ${error}`);
+            }
+        });
     }
-    else {
 
-        console.log("Problem starting Csound");
-    }
-
-    csound.Destroy(Csound);
-}
-
-module.exports = run;
+    module.exports = run;

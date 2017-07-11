@@ -118,11 +118,16 @@ function getInstalledPackages() {
     let installPath = process.env.INCDIR;
 
     const subdirectories = require('filehound').create().path(installPath).directory().findSync();
+    const fs = require("fs");
+
 
     for (let i = 0; i < subdirectories.length; i++) {
 
-        let cspJson = require(subdirectories[i] + "/csp.json");
-        installedPackages.push(cspJson.name);
+        if (subdirectories[i].endsWith(".csp")) {
+
+            let cspJson = require(fs.realpathSync(subdirectories[i] + "/csp.json"));
+            installedPackages.push(cspJson.name);
+        }
     }
 
     return installedPackages;

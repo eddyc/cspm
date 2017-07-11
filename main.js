@@ -9,6 +9,7 @@
     }
 
     let option = process.argv[2];
+    let isWin = /^win/.test(process.platform);
 
     switch (option) {
 
@@ -38,6 +39,10 @@
         }
         case "link": {
 
+
+            console.log("Error: link not supported on windows, exiting");
+            process.exit(-1);
+
             if (process.argv.length === 4) {
 
                 let link = require("./link");
@@ -53,6 +58,9 @@
             break;
         }
         case "run": {
+
+            console.log("Error: run not supported on windows, exiting");
+            process.exit(-1);
 
             let run = require("./run");
             let packageName = process.argv[3];
@@ -78,9 +86,7 @@
         default: {
 
             console.log("Usage:");
-            console.log("cspm update");
-            // console.log("cspm install");
-            console.log("cspm install -g <package-name>");
+            console.log("cspm install user/repo/version");
         }
     }
 })();
