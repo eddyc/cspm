@@ -124,6 +124,7 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
     mv(downloadedPackagePath, destinationPath, function(error) {
 
         fs.removeSync("./download." + packageName);
+        let isWin = /^win/.test(process.platform);
 
         function symlink(filePath) {
 
@@ -135,7 +136,15 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
                 fs.removeSync(destination);
             }
 
-            fs.symlinkSync(source, destination);
+            if (isWin === true) {
+
+                fs.linkSync(source, destination);
+
+            }
+            else {
+
+                fs.symlinkSync(source, destination);
+            }
         }
 
         symlink(getEntrypoint(cspJson));
