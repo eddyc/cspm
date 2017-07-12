@@ -1,6 +1,6 @@
 {
     "name": "cspm",
-    "version": "0.0.32",
+    "version": "0.0.33",
     "description": "Package management and build tool for the Csound language",
     "main": "main.js",
     "bin": {
