@@ -10,20 +10,22 @@
 
     let option = process.argv[2];
     let isWin = /^win/.test(process.platform);
+    const path = require("path");
 
     switch (option) {
 
         case "install": {
 
-
-            let install = require("./install").install;
+            let installPath = path.join(__dirname, "install");
+            let install = require(installPath).install;
             let result = install(process.argv);
             return result;
             break;
         }
         case "init": {
 
-            let init = require('./init').init;
+            let initPath = path.join(__dirname, "init");
+            let init = require(initPath).init;
             let type = process.argv[3];
 
             if (process.argv.length === 3) {
@@ -47,7 +49,8 @@
 
             if (process.argv.length === 4) {
 
-                let link = require("./link");
+                let linkPath = path.join(__dirname, "link");
+                let link = require(linkPath);
                 let packageName = process.argv[3];
                 link(packageName);
             }
@@ -67,7 +70,9 @@
                 process.exit(-1);
             }
 
-            let run = require("./run");
+            let runPath = path.join(__dirname, "run");
+
+            let run = require(runPath);
             let packageName = process.argv[3];
             run(packageName, process.argv);
             break;
@@ -77,7 +82,8 @@
 
             if (process.argv.length === 4) {
 
-                let build = require("./build");
+                let buildPath = path.join(__dirname, "build");
+                let build = require(buildPath);
                 let buildType = process.argv[3];
                 build(buildType);
             }

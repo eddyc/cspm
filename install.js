@@ -66,15 +66,19 @@ function install(argv) {
 
 function installPackage(packageCoordinates, doneCallback, errorCallback) {
 
-    let downloadAndUnzipFile = require("./download").downloadAndUnzipFile;
+    const path = require("path");
+    let downloadPath = path.join(__dirname, "download");
+    let downloadAndUnzipFile = require(downloadPath).downloadAndUnzipFile;
+
 
     downloadAndUnzipFile(packageCoordinates, function(downloadFolderPath) {
 
-        let cspJsonPath = process.cwd() + "/" + downloadFolderPath + packageCoordinates.repo + "/csp.json";
+        let cspJsonPath = path.join(downloadFolderPath, packageCoordinates.repo, "csp.json");
         let cspJson = require(cspJsonPath);
-        let globalPackagePath = require("./utilities").getGlobalPackagePath();
-        let destinationFolder = globalPackagePath + "/" + packageCoordinates.repo;
-        let destinationPath = destinationFolder  + "/Versions/" + cspJson.version;
+        let utilitiesPath = path.join(__dirname, "utilities");
+        let globalPackagePath = require(utilitiesPath).getGlobalPackagePath();
+        let destinationFolder = path.join(globalPackagePath, packageCoordinates.repo);
+        let destinationPath = path.join(destinationFolder, "Versions", cspJson.version);
         let fs = require("fs-extra");
 
         if (fs.existsSync(destinationPath) === false) {
@@ -110,8 +114,9 @@ function getEntrypoint(cspJson) {
 function movePackageFolder(packageName, downloadedPackagePath, destinationFolder, cspJson) {
 
     let fs = require("fs-extra");
+    const path = require("path");
 
-    let destinationPath = destinationFolder  + "/Versions/" + cspJson.version;
+    let destinationPath = path.join(destinationFolder, "Versions", cspJson.version);
     fs.ensureDirSync(destinationPath);
 
     if (fs.existsSync(destinationPath)) {
@@ -123,13 +128,14 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
 
     mv(downloadedPackagePath, destinationPath, function(error) {
 
-        fs.removeSync("./download." + packageName);
+        let downloadPath = path.join(__dirname, "download." + packageName);
+        fs.removeSync(downloadPath);
         let isWin = /^win/.test(process.platform);
 
         function symlink(filePath) {
 
-            let destination = destinationFolder + "/" + filePath;
-            let source = destinationPath + "/" + filePath;
+            let destination = path.join(destinationFolder, filePath);
+            let source = path.join(destinationPath, filePath);
 
             if (fs.existsSync(destination)) {
 

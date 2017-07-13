@@ -9,7 +9,8 @@ function downloadFile(user, url, destinationFolder, fileName, finishedCallback) 
         fs.mkdirSync(destinationFolder);
     }
 
-    let filePath = destinationFolder + fileName;
+    const path = require("path");
+    let filePath = path.join(destinationFolder, fileName);
 
     var options = {
         host: 'api.github.com',
@@ -53,12 +54,16 @@ function downloadAndUnzipFile(packageCoordinates, callback) {
 
 function downloadPackage(packageCoordinates, finishedCallback) {
 
-    let downloadFolderPath = "./download." + packageCoordinates.repo + "/";
+    const path = require("path");
+
+    let downloadFolderPath = path.join(process.cwd(), "download." + packageCoordinates.repo);
+
     let fs = require("fs-extra");
     if (fs.existsSync(downloadFolderPath)) {
 
         fs.removeSync(downloadFolderPath);
     }
+
 
     let releaseUrl = "";
 
@@ -86,37 +91,6 @@ function downloadPackage(packageCoordinates, finishedCallback) {
 
 }
 
-function unzipPackage(packageZipPath, packageJson, callback, clean, fileName) {
-
-    let fs = require('fs-extra');
-    let unzip = require('unzip');
-    let stream = fs.createReadStream(packageZipPath).pipe(unzip.Extract({ path: "./.tmp" }));
-
-    if (!fs.existsSync("./packages")) {
-
-        fs.mkdirSync("./packages");
-    }
-
-    stream.on('close', function() {
-
-        callback();
-
-        if (clean === true) {
-
-            const subdirectories = require('filehound').create().path(".tmp").directory().findSync();
-            let mv = require('mv');
-
-            for (let i = 0; i < subdirectories.length; i++) {
-
-                let newPath = subdirectories[i].split(".")[1].split("/")[1];
-                mv(subdirectories[i], "./packages/" + newPath, function(err) {});
-            }
-
-            fs.removeSync("./.tmp");
-        }
-    });
-}
-
 function unzipFile(filePath, folderPath, finishedCallback) {
 
     let fs = require('fs-extra');
@@ -133,12 +107,12 @@ function unzipFile(filePath, folderPath, finishedCallback) {
 function renameUnzippedDirectory(newName, folderPath) {
 
     const subdirectories = require('filehound').create().path(folderPath).directory().findSync();
-
-    let newPath = folderPath + newName;
+    const path = require("path");
+    let newPath = path.join(folderPath, newName);
 
     for (let i = 0; i < subdirectories.length; i++) {
 
-        if (subdirectories[i].includes(newPath.split("/")[2]) === true) {
+        if (subdirectories[i].includes(newName) === true) {
             let mv = require('mv');
             mv(subdirectories[i], newPath, function(err) {
 

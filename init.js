@@ -8,10 +8,14 @@ function init(type) {
         process.exit(-1);
     }
 
-    let askQuestion = require("./utilities").askQuestion;
+    const path = require("path");
+    let utilitiesPath = path.join(__dirname, "utilities");
 
+    let askQuestion = require(utilitiesPath).askQuestion;
 
-    if (fs.existsSync("./csp.json")) {
+    let cspJsonPath = path.join(process.cwd(), "csp.json");
+
+    if (fs.existsSync(cspJsonPath)) {
 
         let response = askQuestion("csp.json exists, re-initialise?", ["yes", "no"], 1);
 
@@ -49,19 +53,20 @@ function init(type) {
 
     let fileName = 'csp.json';
 
-    console.log(jsonObject);
-
     jsonfile.writeFileSync(fileName, jsonObject);
 }
 
 function initialiseGeneral() {
+
+    const path = require("path");
 
     console.log("Initialising Csound package:");
 
     let readlineSync = require('readline-sync');
 
     let jsonObject = {};
-    let nameSuggestion = process.cwd().split("/").slice(-1)[0];
+    let nameSuggestion = process.cwd().split(path.sep).slice(-1)[0];
+
     jsonObject.name = readlineSync.question('Package name: (' + nameSuggestion + ')\n> ');
     jsonObject.name = jsonObject.name === "" ? nameSuggestion : jsonObject.name;
     jsonObject.user = readlineSync.question('Github username: \n> ');
@@ -93,9 +98,11 @@ function initialiseUdo(jsonObject) {
 
     jsonObject.udo = {};
     let createEntrypoint = "";
-    let nameSuggestion = process.cwd().split("/").slice(-1)[0].split(".")[0] + ".udo";
+    let nameSuggestion = process.cwd().split(path.sep).slice(-1)[0].split(".")[0] + ".udo";
 
-    let suggestedFileExists = fs.existsSync("./" + nameSuggestion);
+    const path = require("path");
+    let nameSuggestionPath = path.join(process.cwd(), nameSuggestion);
+    let suggestedFileExists = fs.existsSync(nameSuggestionPath);
 
     while(createEntrypoint.localeCompare("no") !== 0 && createEntrypoint.localeCompare("yes") !== 0) {
 
@@ -239,10 +246,13 @@ function initialiseCsd(jsonObject) {
     jsonObject.csd = {};
 
     let nameEntrypoint = "";
-    let nameSuggestion = process.cwd().split("/").slice(-1)[0].split(".")[0];
+    const path = require("path");
+
+    let nameSuggestion = process.cwd().split(path.sep).slice(-1)[0].split(".")[0];
     let suggestedFileName = nameSuggestion + ".csd";
 
-    let suggestedFileExists = fs.existsSync(process.cwd() + "/" + suggestedFileName);
+    let suggestedFileNamePath = path.join(process.cwd(), suggestedFileName);
+    let suggestedFileExists = fs.existsSync(suggestedFileNamePath);
 
     while(nameEntrypoint.localeCompare("no") !== 0 && nameEntrypoint.localeCompare("yes") !== 0) {
 
@@ -269,15 +279,12 @@ function initialiseCsd(jsonObject) {
         do {
 
             entrypointFileName = readlineSync.question("Entrypoint file name:\n> ");
-            fileExists = fs.existsSync("./" + entrypointFileName);
+            let entrypointFileNamePath = path.join(process.cwd(), entrypointFileName);
+            fileExists = fs.existsSync(entrypointFileNamePath);
 
             if (fileExists === false) {
 
                 console.log("File not found\n");
-            }
-            else {
-
-                entrypointFileName = "./" + entrypointFileName;
             }
 
         } while (fileExists === false);
@@ -293,7 +300,9 @@ function initialiseCsd(jsonObject) {
 
     result = fileString.match(/(\$\b\S+\b)/ig);
 
-    let uniqueArray = require("./utilities").uniqueArray;
+    let utilitiesPath = path.join(process.cwd(), "utilities");
+
+    let uniqueArray = require(utilitiesPath).uniqueArray;
     let macros = uniqueArray(result);
     macros = macros.map(y => { return y.substr(1)});
 

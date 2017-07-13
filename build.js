@@ -1,7 +1,8 @@
 function build(buildType) {
 
-
-    let cspJson = require(process.cwd() + "/csp");
+    const path = require("path");
+    let cspJsonPath = path.join(process.cwd(), "csp");
+    let cspJson = require(cspJsonPath);
 
     switch (buildType) {
 
@@ -40,7 +41,10 @@ function buildReadme(cspJson) {
     + "\n\n### Version\n\n" + cspJson.version
     + "\n\n### Dependencies\n\n";
 
-    let getPackageCoordinates = require("./utilities").getPackageCoordinates;
+    const path = require("path");
+    let utilitiesPath = path.join(__dirname, "utilities");
+
+    let getPackageCoordinates = require(utilitiesPath).getPackageCoordinates;
     let dependencyUrlArray = [];
     for (let dependency in cspJson.dependencies) {
 
@@ -108,7 +112,7 @@ function buildReadme(cspJson) {
     }
 
 
-    fs.writeFileSync(process.cwd() + "/README.md", md);
+    fs.writeFileSync(path.join(process.cwd(), "README.md"), md);
 }
 
 module.exports = build;
