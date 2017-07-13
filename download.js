@@ -41,13 +41,15 @@ function downloadAndUnzipFile(packageCoordinates, callback) {
 
         unzipFile(filePath, folderPath, function() {
 
-            let newPath = renameUnzippedDirectory(packageCoordinates.repo, folderPath);
+            renameUnzippedDirectory(packageCoordinates.repo, folderPath, function(newPath) {
 
-            let fs = require('fs');
-            fs.unlinkSync(filePath);
+              let fs = require('fs');
+              fs.unlinkSync(filePath);
 
-            callback(folderPath);
+              callback(folderPath);
 
+
+            });
         });
     });
 }
@@ -104,7 +106,7 @@ function unzipFile(filePath, folderPath, finishedCallback) {
     });
 }
 
-function renameUnzippedDirectory(newName, folderPath) {
+function renameUnzippedDirectory(newName, folderPath, doneCallback) {
 
     const subdirectories = require('filehound').create().path(folderPath).directory().findSync();
     const path = require("path");
@@ -116,13 +118,15 @@ function renameUnzippedDirectory(newName, folderPath) {
             let mv = require('mv');
             mv(subdirectories[i], newPath, function(err) {
 
-                if (typeof err != 'undefined') {
+                if (typeof err !== 'undefined') {
 
                     console.log("errored: " + err);
                 }
-            });
+                else {
 
-            return newPath;
+                  doneCallback(newPath);
+                }
+            });
         }
     }
 }
