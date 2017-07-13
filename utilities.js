@@ -100,7 +100,6 @@ function uniqueArray(array) {
 
     for (let i = 1; i < array.length; ++i) {
 
-        console.log(currentString);
         if (array[i] !== currentString) {
 
             newArray.push(array[i]);
@@ -119,13 +118,14 @@ function getInstalledPackages() {
 
     const subdirectories = require('filehound').create().path(installPath).directory().findSync();
     const fs = require("fs");
-
+    const path = require("path");
 
     for (let i = 0; i < subdirectories.length; i++) {
 
         if (subdirectories[i].endsWith(".csp")) {
 
-            let cspJson = require(fs.realpathSync(subdirectories[i] + "/csp.json"));
+            let cspJsonPath = path.join(subdirectories[i], "csp.json");
+            let cspJson = require(currentPath));
             installedPackages.push(cspJson.name);
         }
     }
