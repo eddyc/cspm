@@ -81,9 +81,11 @@ function getDependencyRepoUrl(dependencyCoordinates) {
     dependencyUrl += "https://www.github.com/";
     dependencyUrl += packageCoordinates.user;
     dependencyUrl += "/" + packageCoordinates.repo;
+    dependencyUrl += "/" + packageCoordinates.repo;
 
     return dependencyUrl;
 }
+
 
 function uniqueArray(array) {
 
@@ -125,7 +127,7 @@ function getInstalledPackages() {
         if (subdirectories[i].endsWith(".csp")) {
 
             let cspJsonPath = path.join(subdirectories[i], "csp.json");
-            let cspJson = require(currentPath));
+            let cspJson = require(currentPath);
             installedPackages.push(cspJson.name);
         }
     }
