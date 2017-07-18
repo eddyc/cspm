@@ -73,8 +73,6 @@ function installPackage(packageCoordinates, doneCallback, errorCallback) {
 
     downloadAndUnzipFile(packageCoordinates, function(downloadFolderPath) {
 
-        //TODO: this breaks on windows, need to make sure the csp files is there
-        
         let cspJsonPath = path.join(downloadFolderPath, packageCoordinates.repo, "csp.json");
         let cspJson = require(cspJsonPath);
         let utilitiesPath = path.join(__dirname, "utilities");
@@ -132,7 +130,7 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
 
     mv(downloadedPackagePath, destinationPath, function(error) {
 
-        let downloadPath = path.join(__dirname, "download." + packageName);
+        let downloadPath = path.join(process.cwd(), "download." + packageName);
         fs.removeSync(downloadPath);
         let isWin = /^win/.test(process.platform);
 
@@ -153,7 +151,7 @@ function movePackageFolder(packageName, downloadedPackagePath, destinationFolder
             }
             else {
 
-                    fs.symlinkSync(source, destination);
+                fs.symlinkSync(source, destination);
             }
         }
 

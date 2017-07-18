@@ -5,6 +5,10 @@
     if (process.argv.length < 3) {
 
         console.log("cspm: Error, not enough arguments.");
+        console.log("Usage:");
+        console.log("cspm install user/repo/version");
+        console.log("Or for the latest version:");
+        console.log("cspm install user/repo");
         process.exit();
     }
 

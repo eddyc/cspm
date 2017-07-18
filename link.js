@@ -1,3 +1,6 @@
+//TODO: Fix forward slash only paths here
+
+
 function link(packageName) {
 
     let getInstalledPackages = require("./utilities").getInstalledPackages;
@@ -10,10 +13,9 @@ function link(packageName) {
     else {
 
         const fs = require("fs");
-        
+
         let packageDirectory = process.env.INCDIR + "/" + packageName;
         let cspJson = require(fs.realpathSync(packageDirectory) + "/csp.json");
-
 
         if (typeof cspJson.udo !== 'undefined') {
 
