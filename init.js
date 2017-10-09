@@ -300,7 +300,7 @@ function initialiseCsd(jsonObject) {
 
     result = fileString.match(/(\$\b\S+\b)/ig);
 
-    let utilitiesPath = path.join(process.cwd(), "utilities");
+    let utilitiesPath = path.join(__dirname, "utilities");
 
     let uniqueArray = require(utilitiesPath).uniqueArray;
     let macros = uniqueArray(result);
